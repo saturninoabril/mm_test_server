@@ -1,8 +1,8 @@
 [
     {
         "id": "create",
-        "execute-command": "/home/ubuntu/server/terraform_create.sh",
-        "command-working-directory": "/home/ubuntu/server",
+        "execute-command": "/home/ubuntu/mm_test_server/server/terraform_create.sh",
+        "command-working-directory": "/home/ubuntu/mm_test_server/server",
         "response-message": "Creating test servers...",
         "trigger-rule": {
             "match": {
@@ -38,8 +38,8 @@
     },
     {
         "id": "destroy",
-        "execute-command": "/home/ubuntu/server/terraform_destroy.sh",
-        "command-working-directory": "/home/ubuntu/server",
+        "execute-command": "/home/ubuntu/mm_test_server/server/terraform_destroy.sh",
+        "command-working-directory": "/home/ubuntu/mm_test_server/server",
         "response-message": "Destroying test servers...",
         "trigger-rule": {
             "match": {

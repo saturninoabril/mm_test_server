@@ -110,9 +110,10 @@ data "template_file" "user_data" {
       osixia/openldap:1.4.0
 
     export USER=$${user}
-    mkdir $PWD/config
-    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output $PWD/config/config.json
-    sudo chown -R 2000:2000 config/
+    cd ~/
+    mkdir mattermost_config
+    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
+    sudo chown -R 2000:2000 ~/mattermost_config/
 
     # Run Mattermost app
     sudo docker run -d \
@@ -132,7 +133,7 @@ data "template_file" "user_data" {
       -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
       -e MM_TEAMSETTINGS_ENABLEOPENSERVER=true \
       -e USER=$USER \
-      -v $PWD/config:/mattermost/config \
+      -v ~/mattermost_config:/mattermost/config \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
     sudo docker exec app /bin/sh -c 'echo $USER > user.txt'

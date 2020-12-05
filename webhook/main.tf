@@ -65,15 +65,34 @@ data "template_file" "user_data" {
       gnupg-agent \
       software-properties-common
 
+    umask 0022
+
+    # Install terraform
+    curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+    sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+    sudo apt-get update && sudo apt-get install terraform
+    terraform -help
+
+    cd ~/
+
+    git clone https://github.com/saturninoabril/mm_test_server.git
+    cd ~/mm_test_server/server
+    chmod +x terraform_create.sh
+    chmod +x terraform_destroy.sh
+    terraform init
+
+    cd ~/mm_test_server/webhook
+
     # Download webhook
-    curl https://github.com/adnanh/webhook/releases/download/2.7.0/webhook-linux-amd64.tar.gz --output webhook-linux-amd64.tar.gz
-    tar -C ~/ -xzf webhook-linux-amd64.tar.gz
+    curl -L https://github.com/adnanh/webhook/releases/download/2.7.0/webhook-linux-amd64.tar.gz --output webhook-linux-amd64.tar.gz
+    tar -xvzf webhook-linux-amd64.tar.gz
 
-    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/webhook/hooks.json --output $PWD/hooks.json
+    cd ~/mm_test_server/webhook/webhook-linux-amd64
 
-    ./webhook -hooks hooks.json -verbose
+    cp ~/mm_test_server/webhook/hooks.json ~/mm_test_server/webhook/webhook-linux-amd64/hooks.json
 
-    until curl --max-time 5 --output - http://localhost:9000; do echo waiting for app; sleep 5; done;
+    # Access the server manually
+    # ./webhook -hooks hooks.json -verbose
     EOF
 }
 
