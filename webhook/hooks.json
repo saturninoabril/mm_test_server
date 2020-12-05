@@ -1,0 +1,62 @@
+[
+    {
+        "id": "create",
+        "execute-command": "/home/ubuntu/server/terraform_create.sh",
+        "command-working-directory": "/home/ubuntu/server",
+        "response-message": "Creating test servers...",
+        "trigger-rule": {
+            "match": {
+                "type": "value",
+                "value": "[change_value]",
+                "parameter": {
+                    "source": "url",
+                    "name": "[change_name]"
+                }
+            }
+        },
+        "pass-environment-to-command": [
+            {
+                "envname": "WORKSPACE",
+                "source": "url",
+                "name": "workspace"
+            },{
+                "envname": "INSTANCE_COUNT",
+                "source": "url",
+                "name": "instance-count"
+            },
+            {
+                "envname": "DOCKER_IMAGE",
+                "source": "url",
+                "name": "docker-image"
+            },
+            {
+                "envname": "DOCKER_TAG",
+                "source": "url",
+                "name": "docker-tag"
+            }
+        ]
+    },
+    {
+        "id": "destroy",
+        "execute-command": "/home/ubuntu/server/terraform_destroy.sh",
+        "command-working-directory": "/home/ubuntu/server",
+        "response-message": "Destroying test servers...",
+        "trigger-rule": {
+            "match": {
+                "type": "value",
+                "value": "[change_value]",
+                "parameter": {
+                    "source": "url",
+                    "name": "[change_name]"
+                }
+            }
+        },
+        "pass-environment-to-command": [
+            {
+                "envname": "WORKSPACE",
+                "source": "url",
+                "name": "workspace"
+            }
+        ]
+    }
+]
