@@ -111,7 +111,7 @@ data "template_file" "user_data" {
 
     export USER=$${user}
     mkdir $PWD/config
-    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/mattermost/config.json --output $PWD/config/config.json
+    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output $PWD/config/config.json
     sudo chown -R 2000:2000 config/
 
     # Run Mattermost app
