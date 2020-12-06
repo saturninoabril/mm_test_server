@@ -20,7 +20,7 @@ terraform apply --auto-approve
 
 3. Take note of the output public DNS and access the machine directly.
   a. Set AWS profile, see https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html.
-  b. Edit `~/webhook-linux-amd64/hooks.json`, and change `[change_name]` and `[change_value]`. This can be a basic token that permits execution when name and value have exact match. Keep the values strongly unique and secret.
+  b. Edit `~/webhook-linux-amd64/hooks.json`, and change names and values indicated by `"change"`. This can be a basic token that permits execution when name and value have exact match. Keep the values strongly unique and secret.
 Note: This can be done via Terraform directly but ..., just do it manually.
 
 4. Run the server by ``./webhook -hooks hooks.json``. It will be accessible via ``http://localhost:9000``.
