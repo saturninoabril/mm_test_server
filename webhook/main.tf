@@ -5,6 +5,15 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "s3" {
+    # Replace this with your bucket name!
+    bucket         = "change"
+    key            = "change"
+    region         = "change"
+    # Replace this with your DynamoDB table name!
+    dynamodb_table = "change"
+    encrypt        = true
+  }
 }
 
 # Configure the AWS Provider
