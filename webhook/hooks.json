@@ -7,10 +7,10 @@
         "trigger-rule": {
             "match": {
                 "type": "value",
-                "value": "[change_value]",
+                "value": "change",
                 "parameter": {
                     "source": "url",
-                    "name": "[change_name]"
+                    "name": "change"
                 }
             }
         },
@@ -44,10 +44,10 @@
         "trigger-rule": {
             "match": {
                 "type": "value",
-                "value": "[change_value]",
+                "value": "change",
                 "parameter": {
                     "source": "url",
-                    "name": "[change_name]"
+                    "name": "change"
                 }
             }
         },
