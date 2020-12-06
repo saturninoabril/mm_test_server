@@ -59,6 +59,21 @@ variable "security_group_id" {
   type = string
 }
 
+variable "state_bucket" {
+  description = "S3 bucket for state"
+  type        = string
+}
+
+variable "state_key" {
+  description = "State key"
+  type        = string
+}
+
+variable "lock_table" {
+  description = "DynamoDB Table for state locks"
+  type        = string
+}
+
 variable "use_num_suffix" {
   description = "Always append numerical suffix to instance name, even if instance_count is 1"
   type        = bool

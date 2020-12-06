@@ -5,6 +5,15 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "s3" {
+    # Replace this with your bucket name!
+    bucket         = "change"
+    key            = "change"
+    region         = "change"
+    # Replace this with your DynamoDB table name!
+    dynamodb_table = "change"
+    encrypt        = true
+  }
 }
 
 # Configure the AWS Provider
@@ -60,7 +69,7 @@ data "template_file" "user_data" {
     app_instance_url        = format("%s-%s-%d.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace, count.index + 1)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
-    user                    = var.mattermost_docker_image == "mm-cloud-ee" ? var.cloud_user : var.mattermost_docker_image == "enterprise" ? var.cloud_user : ""
+    license                 = var.mattermost_docker_image == "mm-cloud-ee" ? var.cloud_user : var.mattermost_docker_image == "enterprise" ? var.cloud_user : ""
     common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
   }
 
@@ -109,11 +118,15 @@ data "template_file" "user_data" {
       -e LDAP_ADMIN_PASSWORD="mostest" \
       osixia/openldap:1.4.0
 
-    export USER=$${user}
+    export HOME=/home/ubuntu
     cd ~/
     mkdir mattermost_config
     curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
     sudo chown -R 2000:2000 ~/mattermost_config/
+
+    cd ~/mattermost_config
+    touch mattermost.mattermost-license
+    echo $${license} > mattermost.mattermost-license
 
     # Run Mattermost app
     sudo docker run -d \
@@ -132,13 +145,10 @@ data "template_file" "user_data" {
       -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
       -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
       -e MM_TEAMSETTINGS_ENABLEOPENSERVER=true \
-      -e USER=$USER \
-      -v ~/mattermost_config:/mattermost/config \
+      -v $HOME/mattermost_config:/mattermost/config \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
-    sudo docker exec app /bin/sh -c 'echo $USER > user.txt'
-    sudo docker exec app /bin/sh -c 'mattermost license upload user.txt'
-    sudo docker restart app
+    # sudo docker restart app
 
     # Run MinIO object storage
     sudo docker run -d \

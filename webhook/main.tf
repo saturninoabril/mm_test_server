@@ -73,23 +73,21 @@ data "template_file" "user_data" {
     sudo apt-get update && sudo apt-get install terraform
     terraform -help
 
-    cd ~/
-
+    export HOME=/home/ubuntu
+    cd $HOME
     git clone https://github.com/saturninoabril/mm_test_server.git
-    cd ~/mm_test_server/server
+    cd mm_test_server/server
     chmod +x terraform_create.sh
     chmod +x terraform_destroy.sh
     terraform init
 
-    cd ~/mm_test_server/webhook
-
     # Download webhook
+    cd $HOME
     curl -L https://github.com/adnanh/webhook/releases/download/2.7.0/webhook-linux-amd64.tar.gz --output webhook-linux-amd64.tar.gz
     tar -xvzf webhook-linux-amd64.tar.gz
 
-    cd ~/mm_test_server/webhook/webhook-linux-amd64
-
-    cp ~/mm_test_server/webhook/hooks.json ~/mm_test_server/webhook/webhook-linux-amd64/hooks.json
+    cd webhook-linux-amd64
+    cp $HOME/mm_test_server/webhook/hooks.json $HOME/webhook-linux-amd64/hooks.json
 
     # Access the server manually
     # ./webhook -hooks hooks.json -verbose
