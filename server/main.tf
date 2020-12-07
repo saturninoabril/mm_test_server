@@ -259,7 +259,7 @@ resource "aws_route53_record" "this" {
   count = var.instance_count
 
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("%s-%s-%d.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace, count.index + 1)
+  name    = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, var.mattermost_docker_tag, count.index + 1)
   type    = "A"
   ttl     = "300"
   records = [aws_instance.this[count.index].public_ip]
@@ -283,6 +283,6 @@ resource "aws_instance" "this" {
   user_data = data.template_file.user_data[count.index].rendered
 
   tags = merge({
-    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%s-%d.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace, count.index + 1) : var.mattermost_docker_tag
+    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, var.mattermost_docker_tag, count.index + 1) : var.mattermost_docker_tag
   })
 }

@@ -11,10 +11,12 @@ variable "mattermost_docker_tag" {
 
 variable "cloud_user" {
   type = string
+  sensitive = true
 }
 
 variable "e20_user" {
   type = string
+  sensitive = true
 }
 
 variable "instance_count" {
@@ -25,6 +27,7 @@ variable "instance_count" {
 
 variable "key_name" {
   type = string
+  sensitive = true
 }
 
 variable "region" {
@@ -53,10 +56,12 @@ variable "route53_zone_name" {
 
 variable "subnet_id" {
   type = string
+  sensitive = true
 }
 
 variable "security_group_id" {
   type = string
+  sensitive = true
 }
 
 variable "state_bucket" {
