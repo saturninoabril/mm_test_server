@@ -69,7 +69,12 @@ data "template_file" "user_data" {
     app_instance_url        = format("%s-%s-%d.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace, count.index + 1)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
-    license                 = var.mattermost_docker_image == "mm-cloud-ee" ? var.cloud_user : var.mattermost_docker_image == "enterprise" ? var.cloud_user : ""
+    license = lookup({
+      "mm-cloud-ee"=var.cloud_user,
+      "mm-ee-test"=var.cloud_user,
+      "mattermost-enterprise-edition"=var.e20_user,
+      "mattermost-team-edition"="",
+    }, var.mattermost_docker_image, "")
     common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
   }
 

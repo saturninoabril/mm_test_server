@@ -1,22 +1,19 @@
 variable "mattermost_docker_image" {
-  description = "Mattermost edition, e.g. enterprise, mm-cloud-ee"
+  description = "Mattermost edition, e.g. enterprise, mm-ee-test, mm-cloud-ee"
   type        = string
 }
 
 variable "mattermost_docker_tag" {
-  description = "Mattermost image tag, e.g. master, release-5.30, prod-d922f9d-10"
+  description = "Mattermost image tag, e.g. master, release-5.30, prod-d922f9d-10, 704_60b27ef5_9f16e221_d6b4d697"
   type        = string
-  default     = "latest"
 }
 
 variable "cloud_user" {
   type = string
-  sensitive = true
 }
 
 variable "e20_user" {
   type = string
-  sensitive = true
 }
 
 variable "instance_count" {
@@ -27,7 +24,6 @@ variable "instance_count" {
 
 variable "key_name" {
   type = string
-  sensitive = true
 }
 
 variable "region" {
@@ -56,12 +52,10 @@ variable "route53_zone_name" {
 
 variable "subnet_id" {
   type = string
-  sensitive = true
 }
 
 variable "security_group_id" {
   type = string
-  sensitive = true
 }
 
 variable "state_bucket" {
