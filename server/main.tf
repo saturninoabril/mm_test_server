@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.0"
     }
+    acme = {
+      source = "vancluever/acme"
+      version = "1.6.3"
+    }
   }
   backend "s3" {
     # Replace this with your bucket name!
@@ -66,16 +70,19 @@ data "template_file" "user_data" {
   count = var.instance_count
 
   vars = {
-    app_instance_url        = format("%s-%s-%d.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace, count.index + 1)
+    app_instance_url        = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
     license = lookup({
-      "mm-cloud-ee"=var.cloud_user,
-      "mm-ee-test"=var.cloud_user,
-      "mattermost-enterprise-edition"=var.e20_user,
-      "mattermost-team-edition"="",
+      "mm-cloud-ee"                   = var.cloud_user,
+      "mm-ee-test"                    = var.cloud_user,
+      "mattermost-enterprise-edition" = var.e20_user,
+      "mattermost-team-edition"       = "",
     }, var.mattermost_docker_image, "")
-    common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
+    common_server_url = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
+    certificate_pem = acme_certificate.certificate[count.index].certificate_pem
+    issuer_pem = acme_certificate.certificate[count.index].issuer_pem
+    private_key_pem = acme_certificate.certificate[count.index].private_key_pem
   }
 
   template = <<-EOF
@@ -126,8 +133,10 @@ data "template_file" "user_data" {
     export HOME=/home/ubuntu
     cd ~/
     mkdir mattermost_config
+    mkdir mattermost_data
     curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
     sudo chown -R 2000:2000 ~/mattermost_config/
+    sudo chown -R 2000:2000 ~/mattermost_data/
 
     cd ~/mattermost_config
     touch mattermost.mattermost-license
@@ -151,6 +160,7 @@ data "template_file" "user_data" {
       -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
       -e MM_TEAMSETTINGS_ENABLEOPENSERVER=true \
       -v $HOME/mattermost_config:/mattermost/config \
+      -v $HOME/mattermost_data:/mattermost/data \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
     # sudo docker restart app
@@ -233,6 +243,21 @@ data "template_file" "user_data" {
 
     docker exec mm-openldap bash -c 'echo -e "dn: cn=developers,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev-ops.one,ou=testusers,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-one,ou=testgroups,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
+    sudo apt-get install -y nginx
+    sudo service nginx start
+
+    sudo mkdir /etc/cert
+    sudo touch /etc/cert/fullchain.pem
+    sudo cat certificate_pem > /etc/cert/fullchain.pem
+    sudo cat issuer_pem > /etc/cert/fullchain.pem
+    sudo touch /etc/cert/privkey.pem
+    sudo cat private_key_pem > /etc/cert/privkey.pem
+
+    sudo rm /etc/nginx/sites-available/default
+    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/nginx_mattermost_ssl --output /etc/nginx/sites-available/default
+    sudo nginx -t
+    sudo service nginx reload
+
     until curl --max-time 5 --output - http://localhost:8065; do echo waiting for app; sleep 5; done;
     EOF
 }
@@ -264,7 +289,7 @@ resource "aws_route53_record" "this" {
   count = var.instance_count
 
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, var.mattermost_docker_tag, count.index + 1)
+  name    = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
   type    = "A"
   ttl     = "300"
   records = [aws_instance.this[count.index].public_ip]
@@ -288,6 +313,30 @@ resource "aws_instance" "this" {
   user_data = data.template_file.user_data[count.index].rendered
 
   tags = merge({
-    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, var.mattermost_docker_tag, count.index + 1) : var.mattermost_docker_tag
+    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1) : var.mattermost_docker_tag
   })
+}
+
+provider "acme" {
+  server_url = "https://acme-v02.api.letsencrypt.org/directory"
+}
+
+resource "tls_private_key" "private_key" {
+  algorithm = "RSA"
+}
+
+resource "acme_registration" "reg" {
+  account_key_pem = tls_private_key.private_key.private_key_pem
+  email_address   = "saturnino@mattermost.com"
+}
+
+resource "acme_certificate" "certificate" {
+  count = var.instance_count
+
+  account_key_pem           = acme_registration.reg.account_key_pem
+  common_name               = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
+
+  dns_challenge {
+    provider = "route53"
+  }
 }

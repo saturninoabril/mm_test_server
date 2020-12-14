@@ -1,5 +1,5 @@
 variable "mattermost_docker_image" {
-  description = "Mattermost edition, e.g. enterprise, mm-ee-test, mm-cloud-ee"
+  description = "Mattermost edition, e.g. mattermost-enterprise-edition, mm-ee-test, mm-cloud-ee"
   type        = string
 }
 
