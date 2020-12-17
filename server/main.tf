@@ -5,15 +5,15 @@ terraform {
       version = "~> 3.0"
     }
     acme = {
-      source = "vancluever/acme"
+      source  = "vancluever/acme"
       version = "1.6.3"
     }
   }
   backend "s3" {
     # Replace this with your bucket name!
-    bucket         = "change"
-    key            = "change"
-    region         = "change"
+    bucket = "change"
+    key    = "change"
+    region = "change"
     # Replace this with your DynamoDB table name!
     dynamodb_table = "change"
     encrypt        = true
@@ -80,9 +80,9 @@ data "template_file" "user_data" {
       "mattermost-team-edition"       = "",
     }, var.mattermost_docker_image, "")
     common_server_url = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
-    certificate_pem = acme_certificate.certificate[count.index].certificate_pem
-    issuer_pem = acme_certificate.certificate[count.index].issuer_pem
-    private_key_pem = acme_certificate.certificate[count.index].private_key_pem
+    certificate_pem   = base64encode(trimspace(acme_certificate.certificate[count.index].certificate_pem))
+    issuer_pem        = base64encode(trimspace(acme_certificate.certificate[count.index].issuer_pem))
+    private_key_pem   = base64encode(trimspace(acme_certificate.certificate[count.index].private_key_pem))
   }
 
   template = <<-EOF
@@ -248,10 +248,7 @@ data "template_file" "user_data" {
 
     sudo mkdir /etc/cert
     sudo touch /etc/cert/fullchain.pem
-    sudo cat certificate_pem > /etc/cert/fullchain.pem
-    sudo cat issuer_pem > /etc/cert/fullchain.pem
     sudo touch /etc/cert/privkey.pem
-    sudo cat private_key_pem > /etc/cert/privkey.pem
 
     sudo rm /etc/nginx/sites-available/default
     sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/nginx_mattermost_ssl --output /etc/nginx/sites-available/default
@@ -333,8 +330,8 @@ resource "acme_registration" "reg" {
 resource "acme_certificate" "certificate" {
   count = var.instance_count
 
-  account_key_pem           = acme_registration.reg.account_key_pem
-  common_name               = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
+  account_key_pem = acme_registration.reg.account_key_pem
+  common_name     = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
 
   dns_challenge {
     provider = "route53"

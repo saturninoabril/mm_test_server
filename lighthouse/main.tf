@@ -73,6 +73,55 @@ data "template_file" "user_data" {
       curl \
       gnupg-agent \
       software-properties-common
+
+    sudo apt-get install -y \
+      ca-certificates \
+      fonts-liberation \
+      libappindicator3-1 \
+      libasound2 \
+      libatk-bridge2.0-0 \
+      libatk1.0-0 \
+      libc6 \
+      libcairo2 \
+      libcups2 \
+      libdbus-1-3 \
+      libexpat1 \
+      libfontconfig1 \
+      libgbm1 \
+      libgcc1 \
+      libglib2.0-0 \
+      libgtk-3-0 \
+      libnspr4 \
+      libnss3 \
+      libpango-1.0-0 \
+      libpangocairo-1.0-0 \
+      libstdc++6 \
+      libx11-6 \
+      libx11-xcb1 \
+      libxcb1 \
+      libxcomposite1 \
+      libxcursor1 \
+      libxdamage1 \
+      libxext6 \
+      libxfixes3 \
+      libxi6 \
+      libxrandr2 \
+      libxrender1 \
+      libxss1 \
+      libxtst6 \
+      lsb-release \
+      wget \
+      xdg-utils
+
+    sudo apt-get install chromium-browser
+
+
+    # Install docker-compose
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    docker-compose --version
+
+    git clone https://github.com/saturninoabril/mm-lighthouse-ci.git
     EOF
 }
 
@@ -92,14 +141,14 @@ resource "aws_instance" "this" {
   user_data = data.template_file.user_data.rendered
 
   tags = {
-    Name = format("webhook-test-server-%s.${var.route53_zone_name}", terraform.workspace)
+    Name = format("%s-test-server.${var.route53_zone_name}", terraform.workspace)
   }
 }
 
 # Create Route53 Records for individual app server
 resource "aws_route53_record" "this" {
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("webhook-test-server-%s.${var.route53_zone_name}", terraform.workspace)
+  name    = format("%s-test-server.${var.route53_zone_name}", terraform.workspace)
   type    = "A"
   ttl     = "300"
   records = [aws_instance.this.public_ip]
