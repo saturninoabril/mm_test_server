@@ -284,20 +284,16 @@ data "template_file" "user_data" {
     sudo touch /etc/cert/privkey.pem
 
     # Remove default configuration
-    sudo rm /etc/nginx/conf.d/default.conf
-    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/security.conf --output /etc/nginx/conf.d/security.conf
+    sudo rm -rf /etc/nginx/conf.d/*
+    sudo unlink /etc/nginx/sites-enabled/default
+    sudo rm /etc/nginx/sites-available/default
+
+    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/security.conf --output /etc/nginx/conf.d/security.conf
     sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
 
-    # Ensure that the configuration file is not present before linking.
-    test -w /etc/nginx/conf.d/mattermost.conf && rm /etc/nginx/conf.d/mattermost.conf
     # Linking Nginx configuration file
     ln -s -f /etc/nginx/sites-available/mattermost /etc/nginx/conf.d/mattermost.conf
 
-    # sudo rm /etc/nginx/sites-available/default
-    # sudo unlink /etc/nginx/sites-enabled/default
-    # sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
-    # cd /etc/nginx/sites-enabled/
-    # sudo ln -s /etc/nginx/sites-available/mattermost
     sudo nginx -t
     sudo service nginx reload
 
