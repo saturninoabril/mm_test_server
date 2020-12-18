@@ -110,7 +110,9 @@ data "template_file" "user_data" {
       ca-certificates \
       curl \
       gnupg-agent \
-      software-properties-common
+      software-properties-common \
+      moreutils \
+      jq
 
     # Install docker
     curl -fsSL https://get.docker.com -o get-docker.sh
@@ -151,6 +153,16 @@ data "template_file" "user_data" {
     mkdir mattermost_config
     mkdir mattermost_data
     curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
+
+    echo "Modify config"
+    jq '.ElasticsearchSettings.ConnectionUrl = "http://$${common_server_url}:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableIndexing = "true"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableSearching = "true"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableAutocomplete = "true"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ServiceSettings.SiteURL = "http://$${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.TeamSettings.MaxUsersPerTeam = "2000"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    sleep 5
+
     sudo chown -R 2000:2000 ~/mattermost_config/
     sudo chown -R 2000:2000 ~/mattermost_data/
 
@@ -178,29 +190,6 @@ data "template_file" "user_data" {
       -v $HOME/mattermost_data:/mattermost/data \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
-    echo "Show default config"
-    sudo docker exec mm-app sh -c 'mattermost config show'
-
-    echo "Modify config"
-    sudo docker exec mm-app sh -c 'mattermost config set TeamSettings.MaxUsersPerTeam 2000'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.ConnectionUrl http://$${common_server_url}:9200'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.Username elastic'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.Password changeme'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableIndexing true'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableSearching true'
-    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableAutocomplete true'
-    sudo docker exec mm-app sh -c 'mattermost config set ServiceSettings.SiteURL http://$${app_instance_url}:8065'
-
-    echo "Show config after change"
-    sudo docker exec mm-app sh -c 'mattermost config show'
-
-    sudo docker restart mm-app
-    sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
-    sudo docker restart mm-app
-
-    echo "Show config after restart"
-    sudo docker exec mm-app sh -c 'mattermost config show'
-
     # Run MinIO object storage
     sudo docker run -d \
       --name mm-minio \
@@ -218,6 +207,13 @@ data "template_file" "user_data" {
       -e WEBHOOK_URL=http://mm-e2e-webhook:3000 \
       -e SITE_URL=http://mm-app:8065 \
       saturnino/mm-e2e-webhook:latest
+
+    sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
+    # sudo docker restart mm-app
+    sleep 10
+
+    echo "Show config after restart"
+    sudo docker exec mm-app sh -c 'mattermost config show'
 
     docker exec mm-openldap bash -c 'echo -e "dn: ou=testusers,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: organizationalunit" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
@@ -287,7 +283,9 @@ data "template_file" "user_data" {
     sudo touch /etc/cert/privkey.pem
 
     sudo rm /etc/nginx/sites-available/default
-    sudo curl $${nginx_config} --output /etc/nginx/sites-available/default
+    sudo unlink /etc/nginx/sites-enabled/default
+    sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
+    sudo ln -s /etc/nginx/sites-available/mattermost
     sudo nginx -t
     sudo service nginx reload
 
