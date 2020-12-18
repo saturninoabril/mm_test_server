@@ -22,6 +22,12 @@ variable "instance_count" {
   default     = 1
 }
 
+variable "max_instance_count" {
+  description = "Max number of instances to launch"
+  type        = number
+  default     = 1
+}
+
 variable "key_name" {
   type = string
 }

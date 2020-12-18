@@ -61,6 +61,8 @@ data "aws_route53_zone" "selected" {
 }
 
 locals {
+  instance_count = var.instance_count > var.max_instance_count ? var.max_instance_count : var.instance_count
+
   license = lookup({
     "mm-cloud-ee"                   = var.cloud_user,
     "mm-ee-test"                    = var.cloud_user,
@@ -87,7 +89,7 @@ locals {
 # Create Ubuntu server/s and install per setup instruction
 
 data "template_file" "user_data" {
-  count = var.instance_count
+  count = local.instance_count
 
   vars = {
     app_instance_url        = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
@@ -325,7 +327,7 @@ resource "aws_instance" "common" {
 
 # Create Route53 Records for individual mm-app server
 resource "aws_route53_record" "this" {
-  count = var.instance_count
+  count = local.instance_count
 
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
@@ -336,7 +338,7 @@ resource "aws_route53_record" "this" {
 
 # Create AWS Instance for individual mm-app server
 resource "aws_instance" "this" {
-  count = var.instance_count
+  count = local.instance_count
 
   ami               = data.aws_ami.ubuntu.id
   instance_type     = var.mm_instance_type
@@ -370,7 +372,7 @@ resource "acme_registration" "reg" {
 }
 
 resource "acme_certificate" "certificate" {
-  count = var.tls ? var.instance_count : 0
+  count = var.tls ? local.instance_count : 0
 
   account_key_pem = acme_registration.reg.account_key_pem
   common_name     = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
