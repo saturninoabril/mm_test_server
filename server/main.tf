@@ -60,6 +60,26 @@ data "aws_route53_zone" "selected" {
   name = format("%s.", var.route53_zone_name)
 }
 
+locals {
+  license = lookup({
+    "mm-cloud-ee"                   = var.cloud_user,
+    "mm-ee-test"                    = var.cloud_user,
+    "mattermost-enterprise-edition" = var.e20_user,
+    "mattermost-team-edition"       = "",
+  }, var.mattermost_docker_image, "")
+
+  edition = lookup({
+    "mm-cloud-ee"                   = "ce",
+    "mm-ee-test"                    = "ce",
+    "mattermost-enterprise-edition" = "ee",
+    "mattermost-team-edition"       = "te",
+  }, var.mattermost_docker_image, "")
+
+  url_base_prefix = substr(format("%s-%s-%s", terraform.workspace, local.edition, var.mattermost_docker_tag), 0, 45)
+
+  nginx_config = format("%s/%s", "https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost", var.tls ? "nginx_mattermost_ssl" : "nginx_mattermost")
+}
+
 # ------------------------------------------------------------------
 # Resources to create
 # ------------------------------------------------------------------
@@ -70,19 +90,15 @@ data "template_file" "user_data" {
   count = var.instance_count
 
   vars = {
-    app_instance_url        = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
+    app_instance_url        = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
-    license = lookup({
-      "mm-cloud-ee"                   = var.cloud_user,
-      "mm-ee-test"                    = var.cloud_user,
-      "mattermost-enterprise-edition" = var.e20_user,
-      "mattermost-team-edition"       = "",
-    }, var.mattermost_docker_image, "")
-    common_server_url = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
-    certificate_pem   = base64encode(trimspace(acme_certificate.certificate[count.index].certificate_pem))
-    issuer_pem        = base64encode(trimspace(acme_certificate.certificate[count.index].issuer_pem))
-    private_key_pem   = base64encode(trimspace(acme_certificate.certificate[count.index].private_key_pem))
+    license                 = local.license
+    common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
+    nginx_config            = local.nginx_config
+    certificate_pem         = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].certificate_pem)) : ""
+    issuer_pem              = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].issuer_pem)) : ""
+    private_key_pem         = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].private_key_pem)) : ""
   }
 
   template = <<-EOF
@@ -103,11 +119,11 @@ data "template_file" "user_data" {
 
     # Set DB config
     export MM_SQLSETTINGS_DRIVERNAME="postgres"
-    export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
+    export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
 
     # Run PostgreSQL DB
     sudo docker run -d \
-      --name db \
+      --name mm-db \
       -p 5432:5432 \
       -e POSTGRES_USER=mmuser -e POSTGRES_PASSWORD=mostest \
       -e POSTGRES_DB=mattermost_test \
@@ -142,15 +158,14 @@ data "template_file" "user_data" {
     touch mattermost.mattermost-license
     echo $${license} > mattermost.mattermost-license
 
-    # Run Mattermost app
+    # Run Mattermost mm-app
     sudo docker run -d \
-      --name app \
-      --link db \
+      --name mm-app \
+      --link mm-db \
       --link mm-openldap \
       --link mm-inbucket \
       -p 8065:8065 \
       -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-      -e MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://$${common_server_url}:9200 \
       -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
       -e MM_EXPERIMENTALSETTINGS_USENEWSAMLLIBRARY=true \
       -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
@@ -163,7 +178,28 @@ data "template_file" "user_data" {
       -v $HOME/mattermost_data:/mattermost/data \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
-    # sudo docker restart app
+    echo "Show default config"
+    sudo docker exec mm-app sh -c 'mattermost config show'
+
+    echo "Modify config"
+    sudo docker exec mm-app sh -c 'mattermost config set TeamSettings.MaxUsersPerTeam 2000'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.ConnectionUrl http://$${common_server_url}:9200'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.Username elastic'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.Password changeme'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableIndexing true'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableSearching true'
+    sudo docker exec mm-app sh -c 'mattermost config set ElasticsearchSettings.EnableAutocomplete true'
+    sudo docker exec mm-app sh -c 'mattermost config set ServiceSettings.SiteURL http://$${app_instance_url}:8065'
+
+    echo "Show config after change"
+    sudo docker exec mm-app sh -c 'mattermost config show'
+
+    sudo docker restart mm-app
+    sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
+    sudo docker restart mm-app
+
+    echo "Show config after restart"
+    sudo docker exec mm-app sh -c 'mattermost config show'
 
     # Run MinIO object storage
     sudo docker run -d \
@@ -177,10 +213,10 @@ data "template_file" "user_data" {
     # Run webhook for UI testing
     sudo docker run -d \
       --name mm-e2e-webhook \
-      --link app \
+      --link mm-app \
       -p 3000:3000 \
       -e WEBHOOK_URL=http://mm-e2e-webhook:3000 \
-      -e SITE_URL=http://app:8065 \
+      -e SITE_URL=http://mm-app:8065 \
       saturnino/mm-e2e-webhook:latest
 
     docker exec mm-openldap bash -c 'echo -e "dn: ou=testusers,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: organizationalunit" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
@@ -251,11 +287,11 @@ data "template_file" "user_data" {
     sudo touch /etc/cert/privkey.pem
 
     sudo rm /etc/nginx/sites-available/default
-    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/nginx_mattermost_ssl --output /etc/nginx/sites-available/default
+    sudo curl $${nginx_config} --output /etc/nginx/sites-available/default
     sudo nginx -t
     sudo service nginx reload
 
-    until curl --max-time 5 --output - http://localhost:8065; do echo waiting for app; sleep 5; done;
+    until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
     EOF
 }
 
@@ -281,18 +317,18 @@ resource "aws_instance" "common" {
   }
 }
 
-# Create Route53 Records for individual app server
+# Create Route53 Records for individual mm-app server
 resource "aws_route53_record" "this" {
   count = var.instance_count
 
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
+  name    = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
   type    = "A"
   ttl     = "300"
   records = [aws_instance.this[count.index].public_ip]
 }
 
-# Create AWS Instance for individual app server
+# Create AWS Instance for individual mm-app server
 resource "aws_instance" "this" {
   count = var.instance_count
 
@@ -310,7 +346,7 @@ resource "aws_instance" "this" {
   user_data = data.template_file.user_data[count.index].rendered
 
   tags = merge({
-    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1) : var.mattermost_docker_tag
+    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
   })
 }
 
@@ -328,10 +364,10 @@ resource "acme_registration" "reg" {
 }
 
 resource "acme_certificate" "certificate" {
-  count = var.instance_count
+  count = var.tls ? var.instance_count : 0
 
   account_key_pem = acme_registration.reg.account_key_pem
-  common_name     = format("%s-%s-%s-%d.${var.route53_zone_name}", terraform.workspace, var.mattermost_docker_image, substr(replace(var.mattermost_docker_tag, "_", "-"), 0, 12), count.index + 1)
+  common_name     = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
 
   dns_challenge {
     provider = "route53"

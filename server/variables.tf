@@ -41,6 +41,11 @@ variable "mm_instance_type" {
   default = "t3.micro"
 }
 
+variable "tls" {
+  type    = bool
+  default = false
+}
+
 variable "common_instance_type" {
   type    = string
   default = "t3.small"
