@@ -1,0 +1,25 @@
+FROM node:14-alpine
+
+RUN apk update && \
+    apk upgrade && \
+    apk add git 
+
+ENV CYPRESS_baseUrl=http://localhost:8065
+ENV CYPRESS_webhookBaseUrl=http://localhost:3000
+ENV CYPRESS_adminUsername=sysadmin
+ENV CYPRESS_adminPassword=Sys@dmin-sample1
+
+WORKDIR /usr/src
+
+RUN npm install axios express github:larkox/js-client-oauth2#e24e2eb5dfcbbbb3a59d095e831dbe0012b0ac49
+COPY ./e2e/cypress/plugins/post_message_as.js /usr/src/cypress/plugins/post_message_as.js
+COPY ./e2e/utils/webhook_utils.js /usr/src/utils/webhook_utils.js
+COPY ./e2e/webhook_serve.js /usr/src
+
+RUN pwd
+
+RUN ls -rtl
+
+EXPOSE 3000
+
+CMD [ "node", "webhook_serve.js" ]

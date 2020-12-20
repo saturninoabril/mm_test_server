@@ -1,0 +1,63 @@
+FROM cypress/browsers:node14.15.0-chrome86-ff82
+
+RUN node --version
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends --no-upgrade git
+
+# "root"
+RUN whoami
+
+# # point Cypress at the /root/cache no matter what user account is used
+# # see https://on.cypress.io/caching
+# ENV CYPRESS_CACHE_FOLDER=/root/.cache/Cypress
+RUN npm install -g cypress@5.1.0
+# RUN cypress verify
+# # Cypress cache and installed version
+# # should be in the root user's home folder
+RUN cypress cache path
+RUN cypress cache list
+RUN cypress info
+RUN cypress version
+# # give every user read access to the "/root" folder where the binary is cached
+# # we really only need to worry about the top folder, fortunately
+RUN ls -la /root
+RUN chmod -R 755 /root
+
+# there is a built-in user "node" that comes from the very base Docker Node image
+# move test runner binary folder to the non-root's user home directory
+RUN mv /root/.cache /home/node/.cache
+
+RUN chmod -R 755 /home/node
+
+ENV CYPRESS_CACHE_FOLDER=/home/node/.cache/Cypress
+
+WORKDIR /home/src
+
+ENV CI_BASE_URL=localhost
+
+ENV CYPRESS_baseUrl="http://${CI_BASE_URL}"
+ENV CYPRESS_dbConnection="postgres://mmuser:mostest@${CI_BASE_URL}:5432/mattermost_test?sslmode=disable\u0026connect_timeout=10"
+ENV CYPRESS_webhookBaseUrl="http://${CI_BASE_URL}:3000"
+ENV CYPRESS_smtpUrl="http://${CI_BASE_URL}:10080"
+ENV CYPRESS_ciBaseUrl=$CI_BASE_URL
+
+ENV RUN_FILTER="--stage='@prod'"
+
+ENV CYPRESS_chromeWebSecurity=true
+ENV CYPRESS_resetBeforeTest=true
+ENV CYPRESS_runLDAPSync=false
+ENV FAILURE_MESSAGE="At least one test has failed."
+ENV RESULTS_OUTPUT="results-output.txt"
+
+COPY ./e2e .
+
+RUN rm -rf node_modules
+RUN rm -rf results
+
+RUN npm install
+
+RUN node -v
+RUN npm -v
+
+ENTRYPOINT ["node", "run_tests"]
