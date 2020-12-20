@@ -12,9 +12,9 @@ ENV CYPRESS_adminPassword=Sys@dmin-sample1
 WORKDIR /usr/src
 
 RUN npm install axios express github:larkox/js-client-oauth2#e24e2eb5dfcbbbb3a59d095e831dbe0012b0ac49
-COPY ./e2e/cypress/plugins/post_message_as.js /usr/src/cypress/plugins/post_message_as.js
-COPY ./e2e/utils/webhook_utils.js /usr/src/utils/webhook_utils.js
-COPY ./e2e/webhook_serve.js /usr/src
+COPY ./mattermost-webapp/e2e/cypress/plugins/post_message_as.js /usr/src/cypress/plugins/post_message_as.js
+COPY ./mattermost-webapp/e2e/utils/webhook_utils.js /usr/src/utils/webhook_utils.js
+COPY ./mattermost-webapp/e2e/webhook_serve.js /usr/src
 
 RUN pwd
 

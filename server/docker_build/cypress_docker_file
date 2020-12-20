@@ -50,7 +50,7 @@ ENV CYPRESS_runLDAPSync=false
 ENV FAILURE_MESSAGE="At least one test has failed."
 ENV RESULTS_OUTPUT="results-output.txt"
 
-COPY ./e2e .
+COPY ./mattermost-webapp/e2e .
 
 RUN rm -rf node_modules
 RUN rm -rf results
