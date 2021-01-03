@@ -25,6 +25,16 @@ output "common_server_public_ip" {
   value       = aws_instance.common.*.public_ip
 }
 
+# output "cypress_server_public_dns" {
+#   description = "Cypress Public DNS"
+#   value       = aws_instance.cypress.public_dns
+# }
+
+# output "cypress_server_public_ip" {
+#   description = "Cypress Public IP"
+#   value       = aws_instance.cypress.public_ip
+# }
+
 output "acme_certificate_private_key_pem" {
   description = "ACME Cert Private Key Pem"
   value       = acme_certificate.certificate.*.private_key_pem

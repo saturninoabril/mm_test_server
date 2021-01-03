@@ -57,6 +57,11 @@ variable "common_instance_type" {
   default = "t3.small"
 }
 
+# variable "cypress_instance_type" {
+#   type    = string
+#   default = "t3.medium"
+# }
+
 variable "route53_zone_name" {
   type = string
 }

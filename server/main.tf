@@ -325,6 +325,25 @@ resource "aws_instance" "common" {
   }
 }
 
+# resource "aws_instance" "cypress" {
+#   ami               = data.aws_ami.ubuntu.id
+#   instance_type     = var.cypress_instance_type
+#   availability_zone = var.availability_zone
+#   key_name          = var.key_name
+#   root_block_device {
+#     volume_size = 30
+#   }
+
+#   subnet_id              = data.aws_subnet.selected.id
+#   vpc_security_group_ids = [data.aws_security_group.selected.id]
+
+#   user_data = file("install_cypress_service.sh")
+
+#   tags = {
+#     Name = format("%s-%s-common.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace)
+#   }
+# }
+
 # Create Route53 Records for individual mm-app server
 resource "aws_route53_record" "this" {
   count = local.instance_count
