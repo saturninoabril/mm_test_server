@@ -19,16 +19,16 @@ export HOME=/home/ubuntu
 cd $HOME
 mkdir docker_build
 cd docker_build
-curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker_build/cypress_docker_file --output $HOME/docker_build/cypress_docker_file
-curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker_build/webhook_docker_file --output $HOME/docker_build/webhook_docker_file
+curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker_build/Dockerfile.cypress --output $HOME/docker_build/Dockerfile.cypress
+curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker_build/Dockerfile.webhook --output $HOME/docker_build/Dockerfile.webhook
 
 # Clone mattermost-webapp
 cd $HOME
 git clone https://github.com/mattermost/mattermost-webapp.git
 
 # Build docker images
-sudo docker build -f docker_build/cypress_docker_file -t saturnino/mm-e2e-cypress .
-sudo docker build -f docker_build/webhook_docker_file -t saturnino/mm-e2e-webhook .
+sudo docker build -f docker_build/Dockerfile.cypress -t saturnino/mm-e2e-cypress .
+sudo docker build -f docker_build/Dockerfile.webhook -t saturnino/mm-e2e-webhook .
 
 # RUn docker images
 @echo --- Run Cypress using docker image
