@@ -116,6 +116,8 @@ data "template_file" "user_data" {
       moreutils \
       jq
 
+    export HOME=/home/ubuntu
+
     # Install docker
     curl -fsSL https://get.docker.com -o get-docker.sh
     sudo sh get-docker.sh
@@ -125,13 +127,25 @@ data "template_file" "user_data" {
     export MM_SQLSETTINGS_DRIVERNAME="postgres"
     export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
 
+    cd ~/
+    mkdir docker-compose
+    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker-compose/docker-compose.yml --output ~/docker-compose/docker-compose.yml
+    curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker-compose.common.yml --output ~/docker-compose/docker-compose.common.yml
+    cd docker-compose && mkdir docker
+    curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/postgres.conf --output ~/docker-compose/docker/postgres.conf
+    curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/test-data.ldif --output ~/docker-compose/docker/test-data.ldif
+    cd docker && mkdir keycloak
+    curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/keycloak/realm.json --output ~/docker-compose/docker/keycloak/realm.json
+
     # Run PostgreSQL DB
     sudo docker run -d \
       --name mm-db \
       -p 5432:5432 \
-      -e POSTGRES_USER=mmuser -e POSTGRES_PASSWORD=mostest \
+      -e POSTGRES_USER=mmuser \
+      -e POSTGRES_PASSWORD=mostest \
       -e POSTGRES_DB=mattermost_test \
-      mattermost/mattermost-prod-db
+      -v "$HOME/docker-compose/docker/postgres.conf":/etc/postgresql/postgresql.conf \
+      postgres:10
 
     sudo docker run -d \
       --name mm-inbucket \
@@ -150,7 +164,6 @@ data "template_file" "user_data" {
       -e LDAP_ADMIN_PASSWORD="mostest" \
       osixia/openldap:1.4.0
 
-    export HOME=/home/ubuntu
     cd ~/
     mkdir mattermost_config
     mkdir mattermost_data
@@ -211,7 +224,7 @@ data "template_file" "user_data" {
       -e SITE_URL=http://mm-app:8065 \
       saturnino/mm-e2e-webhook:latest
 
-    sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
+    # sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
     # sudo docker restart mm-app
     sleep 10
 
