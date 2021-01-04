@@ -33,12 +33,12 @@ sudo docker build -f docker_build/Dockerfile.webhook -t saturnino/mm-e2e-webhook
 # RUn docker images
 @echo --- Run Cypress using docker image
 docker run -d --name mm-e2e-cypress-1 \
-  -e CI_BASE_URL=master-e20-prod-ee-5.30.1-1.dev.spinmint.com \
-  -e CYPRESS_baseUrl=http://master-e20-prod-ee-5.30.1-1.dev.spinmint.com \
-  -e CYPRESS_dbConnection=postgres://mmuser:mostest@master-e20-prod-ee-5.30.1-1.dev.spinmint.com:5432/mattermost_test?sslmode=disable\u0026connect_timeout=10 \
-  -e CYPRESS_webhookBaseUrl=http://master-e20-prod-ee-5.30.1-1.dev.spinmint.com:3000 \
-  -e CYPRESS_smtpUrl=http://master-e20-prod-ee-5.30.1-1.dev.spinmint.com:10080 \
-  -e CYPRESS_ciBaseUrl=master-e20-prod-ee-5.30.1-1.dev.spinmint.com \
+  -e CI_BASE_URL=<> \
+  -e CYPRESS_baseUrl=http://<> \
+  -e CYPRESS_dbConnection=postgres://<>/mattermost_test?sslmode=disable\u0026connect_timeout=10 \
+  -e CYPRESS_webhookBaseUrl=http://<>:3000 \
+  -e CYPRESS_smtpUrl=http://<>:10080 \
+  -e CYPRESS_ciBaseUrl=<> \
   saturnino/mm-e2e-cypress:latest \
   node run_tests --stage='@prod' --part=1 --of=4
 
