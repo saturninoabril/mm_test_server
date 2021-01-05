@@ -11,4 +11,4 @@ echo "terraform workspace show:"
 terraform workspace show
 
 echo "terraform destroy --auto-approve:"
-terraform destroy --auto-approve
+terraform destroy --auto-approve -lock=false
