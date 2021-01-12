@@ -175,7 +175,7 @@ data "template_file" "user_data" {
     jq '.ElasticsearchSettings.EnableSearching = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ElasticsearchSettings.EnableAutocomplete = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ServiceSettings.ListenAddress = ":8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-    jq '.ServiceSettings.SiteURL = "http://$${app_instance_url}"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ServiceSettings.SiteURL = "http://$${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.TeamSettings.MaxUsersPerTeam = 2000' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     sleep 5
 
@@ -198,7 +198,6 @@ data "template_file" "user_data" {
       -e MM_EXPERIMENTALSETTINGS_USENEWSAMLLIBRARY=true \
       -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
       -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
-      -e MM_SERVICESETTINGS_ALLOWEDUNTRUSTEDINTERNALCONNECTIONS="localhost mm-e2e-webhook $${app_instance_url}" \
       -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
       -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
       -e MM_TEAMSETTINGS_ENABLEOPENSERVER=true \
@@ -291,26 +290,26 @@ data "template_file" "user_data" {
 
     docker exec mm-openldap bash -c 'echo -e "dn: cn=developers,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev-ops.one,ou=testusers,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-one,ou=testgroups,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
-    sudo apt-get install -y nginx
-    sudo service nginx start
+    # sudo apt-get install -y nginx
+    # sudo service nginx start
 
-    sudo mkdir /etc/cert
-    sudo touch /etc/cert/fullchain.pem
-    sudo touch /etc/cert/privkey.pem
+    # sudo mkdir /etc/cert
+    # sudo touch /etc/cert/fullchain.pem
+    # sudo touch /etc/cert/privkey.pem
 
-    # Remove default configuration
-    sudo rm -rf /etc/nginx/conf.d/*
-    sudo unlink /etc/nginx/sites-enabled/default
-    sudo rm /etc/nginx/sites-available/default
+    # # Remove default configuration
+    # sudo rm -rf /etc/nginx/conf.d/*
+    # sudo unlink /etc/nginx/sites-enabled/default
+    # sudo rm /etc/nginx/sites-available/default
 
-    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/security.conf --output /etc/nginx/conf.d/security.conf
-    sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
+    # sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/security.conf --output /etc/nginx/conf.d/security.conf
+    # sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
 
-    # Linking Nginx configuration file
-    ln -s -f /etc/nginx/sites-available/mattermost /etc/nginx/conf.d/mattermost.conf
+    # # Linking Nginx configuration file
+    # ln -s -f /etc/nginx/sites-available/mattermost /etc/nginx/conf.d/mattermost.conf
 
-    sudo nginx -t
-    sudo service nginx reload
+    # sudo nginx -t
+    # sudo service nginx reload
 
     until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
     EOF

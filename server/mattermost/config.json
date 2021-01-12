@@ -34,7 +34,7 @@
         "EnableOpenTracing": false,
         "EnableSecurityFixAlert": true,
         "EnableInsecureOutgoingConnections": false,
-        "AllowedUntrustedInternalConnections": "",
+        "AllowedUntrustedInternalConnections": "local",
         "EnableMultifactorAuthentication": false,
         "EnforceMultifactorAuthentication": false,
         "EnableUserAccessTokens": false,
@@ -77,9 +77,6 @@
         "ExperimentalChannelOrganization": false,
         "ExperimentalChannelSidebarOrganization": "disabled",
         "ExperimentalDataPrefetch": true,
-        "ImageProxyType": "",
-        "ImageProxyURL": "",
-        "ImageProxyOptions": "",
         "EnableAPITeamDeletion": false,
         "EnableAPIUserDeletion": false,
         "ExperimentalEnableHardenedMode": false,
@@ -417,7 +414,7 @@
         "UseIpAddress": true,
         "UseExperimentalGossip": false,
         "EnableExperimentalGossipEncryption": false,
-        "ReadOnlyConfig": true,
+        "ReadOnlyConfig": false,
         "GossipPort": 8074,
         "StreamingPort": 8075,
         "MaxIdleConns": 100,
@@ -509,10 +506,10 @@
         "Plugins": {},
         "PluginStates": {
             "com.mattermost.nps": {
-                "Enable": true
+                "Enable": false
             },
             "com.mattermost.plugin-incident-management": {
-                "Enable": true
+                "Enable": false
             }
         },
         "EnableMarketplace": true,
@@ -533,7 +530,7 @@
         "RestrictCreationToDomains": ""
     },
     "ImageProxySettings": {
-        "Enable": false,
+        "Enable": true,
         "ImageProxyType": "local",
         "RemoteImageProxyURL": "",
         "RemoteImageProxyOptions": ""
