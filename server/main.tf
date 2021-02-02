@@ -4,10 +4,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 3.0"
     }
-    acme = {
-      source  = "vancluever/acme"
-      version = "1.6.3"
-    }
   }
   backend "s3" {
     # Replace this with your bucket name!
@@ -78,8 +74,6 @@ locals {
   }, var.mattermost_docker_image, "")
 
   url_base_prefix = substr(format("%s-%s-%s", terraform.workspace, local.edition, var.mattermost_docker_tag), 0, 45)
-
-  nginx_config = format("%s/%s", "https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost", var.tls ? "nginx_mattermost_ssl" : "nginx_mattermost")
 }
 
 # ------------------------------------------------------------------
@@ -97,10 +91,6 @@ data "template_file" "user_data" {
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
     common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
-    nginx_config            = local.nginx_config
-    certificate_pem         = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].certificate_pem)) : ""
-    issuer_pem              = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].issuer_pem)) : ""
-    private_key_pem         = var.tls ? base64encode(trimspace(acme_certificate.certificate[count.index].private_key_pem)) : ""
   }
 
   template = <<-EOF
@@ -290,27 +280,6 @@ data "template_file" "user_data" {
 
     docker exec mm-openldap bash -c 'echo -e "dn: cn=developers,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev-ops.one,ou=testusers,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-one,ou=testgroups,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
-    # sudo apt-get install -y nginx
-    # sudo service nginx start
-
-    # sudo mkdir /etc/cert
-    # sudo touch /etc/cert/fullchain.pem
-    # sudo touch /etc/cert/privkey.pem
-
-    # # Remove default configuration
-    # sudo rm -rf /etc/nginx/conf.d/*
-    # sudo unlink /etc/nginx/sites-enabled/default
-    # sudo rm /etc/nginx/sites-available/default
-
-    # sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/security.conf --output /etc/nginx/conf.d/security.conf
-    # sudo curl $${nginx_config} --output /etc/nginx/sites-available/mattermost
-
-    # # Linking Nginx configuration file
-    # ln -s -f /etc/nginx/sites-available/mattermost /etc/nginx/conf.d/mattermost.conf
-
-    # sudo nginx -t
-    # sudo service nginx reload
-
     until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
     EOF
 }
@@ -384,31 +353,8 @@ resource "aws_instance" "this" {
 
   user_data = data.template_file.user_data[count.index].rendered
 
-  tags = merge({
-    "Name" = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
-  })
-}
-
-provider "acme" {
-  server_url = "https://acme-v02.api.letsencrypt.org/directory"
-}
-
-resource "tls_private_key" "private_key" {
-  algorithm = "RSA"
-}
-
-resource "acme_registration" "reg" {
-  account_key_pem = tls_private_key.private_key.private_key_pem
-  email_address   = "saturnino@mattermost.com"
-}
-
-resource "acme_certificate" "certificate" {
-  count = var.tls ? local.instance_count : 0
-
-  account_key_pem = acme_registration.reg.account_key_pem
-  common_name     = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
-
-  dns_challenge {
-    provider = "route53"
+  tags = {
+    Name  = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
+    Owner = local.url_base_prefix
   }
 }
