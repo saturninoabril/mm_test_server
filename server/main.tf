@@ -185,12 +185,10 @@ data "template_file" "user_data" {
       -p 8065:8065 \
       -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
       -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-      -e MM_EXPERIMENTALSETTINGS_USENEWSAMLLIBRARY=true \
       -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
       -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
       -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
       -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-      -e MM_TEAMSETTINGS_ENABLEOPENSERVER=true \
       -v $HOME/mattermost_config:/mattermost/config \
       -v $HOME/mattermost_data:/mattermost/data \
       mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
