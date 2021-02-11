@@ -198,7 +198,7 @@ data "template_file" "user_data" {
       --name mm-minio \
       -p 9000:9000 \
       -e MINIO_ACCESS_KEY=minioaccesskey \
-      -e MINIO_SECRET_KEY=minioaccesskey \
+      -e MINIO_SECRET_KEY=miniosecretkey \
       -e MINIO_SSE_MASTER_KEY="my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574" \
       minio/minio:RELEASE.2019-10-11T00-38-09Z server /data
 
