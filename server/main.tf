@@ -90,7 +90,7 @@ data "template_file" "user_data" {
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
-    common_server_url       = var.mattermost_docker_image == "enterprise" ? aws_instance.common[count.index].public_dns : "localhost"
+    common_server_url       = local.edition == "ee" ? aws_instance.common[0].public_dns : "localhost"
   }
 
   template = <<-EOF
@@ -116,6 +116,9 @@ data "template_file" "user_data" {
     # Set DB config
     export MM_SQLSETTINGS_DRIVERNAME="postgres"
     export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
+
+    # Check Elasticsearch
+    until curl --max-time 5 --output - http://$${common_server_url}:9200; do echo waiting for elasticsearch; sleep 5; done;
 
     cd ~/
     mkdir docker-compose
@@ -164,6 +167,7 @@ data "template_file" "user_data" {
     jq '.ElasticsearchSettings.EnableIndexing = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ElasticsearchSettings.EnableSearching = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ElasticsearchSettings.EnableAutocomplete = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.Sniff = false' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ServiceSettings.ListenAddress = ":8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ServiceSettings.SiteURL = "http://$${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.TeamSettings.MaxUsersPerTeam = 2000' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
@@ -211,7 +215,7 @@ data "template_file" "user_data" {
       -e SITE_URL=http://mm-app:8065 \
       saturnino/mm-e2e-webhook:latest
 
-    # sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
+    sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
     # sudo docker restart mm-app
     sleep 10
 
@@ -278,13 +282,26 @@ data "template_file" "user_data" {
 
     docker exec mm-openldap bash -c 'echo -e "dn: cn=developers,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev-ops.one,ou=testusers,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-one,ou=testgroups,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
+    sudo docker restart mm-app
+    sleep 10
     until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
     EOF
 }
 
+# Create Route53 Records for common service
+resource "aws_route53_record" "common" {
+  count = local.edition == "ee" ? 1 : 0
+
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = format("%s-common.%s", local.url_base_prefix, var.route53_zone_name)
+  type    = "A"
+  ttl     = "300"
+  records = [aws_instance.common[count.index].public_ip]
+}
+
 # Create AWS Instance for common server
 resource "aws_instance" "common" {
-  count = var.mattermost_docker_image == "enterprise" ? 1 : 0
+  count = local.edition == "ee" ? 1 : 0
 
   ami               = data.aws_ami.ubuntu.id
   instance_type     = var.common_instance_type
@@ -300,7 +317,8 @@ resource "aws_instance" "common" {
   user_data = file("install_common_service.sh")
 
   tags = {
-    Name = format("%s-%s-common.${var.route53_zone_name}", var.mattermost_docker_tag, terraform.workspace)
+    Name  = format("common.%s", local.url_base_prefix)
+    Owner = local.url_base_prefix
   }
 }
 
