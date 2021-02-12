@@ -91,6 +91,7 @@ data "template_file" "user_data" {
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
     common_server_url       = local.edition == "ee" ? aws_instance.common[0].public_dns : "localhost"
+    edition                 = local.edition
   }
 
   template = <<-EOF
@@ -118,7 +119,9 @@ data "template_file" "user_data" {
     export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
 
     # Check Elasticsearch
-    until curl --max-time 5 --output - http://$${common_server_url}:9200; do echo waiting for elasticsearch; sleep 5; done;
+    if [$${edition} -eq "ee"]; then \
+      until curl --max-time 5 --output - http://$${common_server_url}:9200; do echo waiting for elasticsearch; sleep 5; done;
+    fi
 
     cd ~/
     mkdir docker-compose
