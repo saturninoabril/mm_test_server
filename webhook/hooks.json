@@ -33,6 +33,11 @@
                 "envname": "DOCKER_TAG",
                 "source": "url",
                 "name": "docker-tag"
+            },
+            {
+                "envname": "ENABLE_ELASTICSEARCH",
+                "source": "url",
+                "name": "es"
             }
         ]
     },

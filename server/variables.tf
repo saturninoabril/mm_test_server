@@ -57,6 +57,10 @@ variable "common_instance_type" {
   default = "t3.small"
 }
 
+variable "enable_elasticsearch" {
+  type = bool
+}
+
 # variable "cypress_instance_type" {
 #   type    = string
 #   default = "t3.medium"

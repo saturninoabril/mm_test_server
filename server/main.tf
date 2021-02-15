@@ -90,8 +90,8 @@ data "template_file" "user_data" {
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
-    common_server_url       = local.edition == "ee" ? aws_instance.common[0].public_dns : "localhost"
-    edition                 = local.edition
+    common_server_url       = var.enable_elasticsearch ? aws_instance.common[0].public_dns : "localhost"
+    enable_elasticsearch    = var.enable_elasticsearch ? "true" : "false"
   }
 
   template = <<-EOF
@@ -119,7 +119,7 @@ data "template_file" "user_data" {
     export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
 
     # Check Elasticsearch
-    if [$${edition} -eq "ee"]; then \
+    if [$${enable_elasticsearch} -eq "true"]; then \
       until curl --max-time 5 --output - http://$${common_server_url}:9200; do echo waiting for elasticsearch; sleep 5; done;
     fi
 
@@ -167,9 +167,9 @@ data "template_file" "user_data" {
 
     echo "Modify config"
     jq '.ElasticsearchSettings.ConnectionUrl = "http://$${common_server_url}:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-    jq '.ElasticsearchSettings.EnableIndexing = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-    jq '.ElasticsearchSettings.EnableSearching = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-    jq '.ElasticsearchSettings.EnableAutocomplete = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableIndexing = $${enable_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableSearching = $${enable_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+    jq '.ElasticsearchSettings.EnableAutocomplete = $${enable_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ElasticsearchSettings.Sniff = false' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ServiceSettings.ListenAddress = ":8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
     jq '.ServiceSettings.SiteURL = "http://$${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
@@ -293,7 +293,7 @@ data "template_file" "user_data" {
 
 # Create Route53 Records for common service
 resource "aws_route53_record" "common" {
-  count = local.edition == "ee" ? 1 : 0
+  count = var.enable_elasticsearch ? 1 : 0
 
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = format("%s-common.%s", local.url_base_prefix, var.route53_zone_name)
@@ -304,7 +304,7 @@ resource "aws_route53_record" "common" {
 
 # Create AWS Instance for common server
 resource "aws_instance" "common" {
-  count = local.edition == "ee" ? 1 : 0
+  count = var.enable_elasticsearch ? 1 : 0
 
   ami               = data.aws_ami.ubuntu.id
   instance_type     = var.common_instance_type
