@@ -19,6 +19,6 @@ terraform apply \
   -var="mattermost_docker_image=$DOCKER_IMAGE" \
   -var="mattermost_docker_tag=$DOCKER_TAG" \
   -var="instance_count=$INSTANCE_COUNT" \
-  -var="enable_elasticsearch=$ENABLE_ELASTICSEARCH" \
+  -var="elasticsearch_instance=$ENABLE_ELASTICSEARCH" \
   --auto-approve \
   -lock=false
