@@ -58,7 +58,8 @@ variable "common_instance_type" {
 }
 
 variable "enable_elasticsearch" {
-  type = bool
+  type    = bool
+  default = false
 }
 
 # variable "cypress_instance_type" {
