@@ -96,7 +96,8 @@
         "DebugSplit": false,
         "ThreadAutoFollow": true,
         "CollapsedThreads": "disabled",
-        "ManagedResourcePaths": ""
+        "ManagedResourcePaths": "",
+        "EnableLegacySidebar": false
     },
     "TeamSettings": {
         "SiteName": "Mattermost",
