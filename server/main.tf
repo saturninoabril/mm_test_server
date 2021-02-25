@@ -60,20 +60,12 @@ locals {
   instance_count = var.instance_count > var.max_instance_count ? var.max_instance_count : var.instance_count
 
   license = lookup({
-    "mm-cloud-ee"                   = var.cloud_user,
-    "mm-ee-test"                    = var.cloud_user,
-    "mattermost-enterprise-edition" = var.e20_user,
-    "mattermost-team-edition"       = "",
-  }, var.mattermost_docker_image, "")
+    "ce"                      = var.cloud_user,
+    "ee"                      = var.e20_user,
+    "mattermost-team-edition" = "",
+  }, var.edition, "")
 
-  edition = lookup({
-    "mm-cloud-ee"                   = "ce",
-    "mm-ee-test"                    = "ce",
-    "mattermost-enterprise-edition" = "ee",
-    "mattermost-team-edition"       = "te",
-  }, var.mattermost_docker_image, "")
-
-  url_base_prefix = substr(format("%s-%s-%s", terraform.workspace, local.edition, var.mattermost_docker_tag), 0, 45)
+  url_base_prefix = substr(format("%s-%s-%s", terraform.workspace, var.edition, var.mattermost_docker_tag), 0, 45)
 }
 
 # ------------------------------------------------------------------
@@ -131,7 +123,7 @@ data "template_file" "user_data" {
     curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/postgres.conf --output ~/docker-compose/docker/postgres.conf
     curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/test-data.ldif --output ~/docker-compose/docker/test-data.ldif
     cd docker && mkdir keycloak
-    curl https://github.com/saturninoabril/mm_test_server/blob/main/server/docker-compose/docker/keycloak/realm.json --output ~/docker-compose/docker/keycloak/realm.json
+    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker-compose/docker/keycloak/realm.json --output ~/docker-compose/docker/keycloak/realm.json
 
     # Run PostgreSQL DB
     sudo docker run -d \
@@ -208,6 +200,24 @@ data "template_file" "user_data" {
       -e MINIO_SECRET_KEY=miniosecretkey \
       -e MINIO_SSE_MASTER_KEY="my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574" \
       minio/minio:RELEASE.2019-10-11T00-38-09Z server /data
+
+    # cd ~/
+    # mkdir keycloak_setup
+    # curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker-compose/docker/keycloak/realm.json --output ~/keycloak_setup/realm.json
+    # cd keycloak_setup
+    # sed -i "s/localhost/$${app_instance_url}/gi" realm.json
+    # sudo chown -R 2000:2000 ~/keycloak_setup/
+
+    # Run Keycloak for SAML
+    # sudo docker run -d \
+    #   --name mm-keycloak \
+    #   -p 8484:8080 \
+    #   -e KEYCLOAK_USER=mmuser \
+    #   -e KEYCLOAK_PASSWORD=mostest \
+    #   -e DB_VENDOR=h2 \
+    #   -e KEYCLOAK_IMPORT=/setup/realm.json \
+    #   -v $HOME/keycloak_setup:/setup \
+    #   jboss/keycloak:10.0.2
 
     # Run webhook for UI testing
     sudo docker run -d \

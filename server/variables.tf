@@ -8,6 +8,11 @@ variable "mattermost_docker_tag" {
   type        = string
 }
 
+variable "edition" {
+  description = "Mattermost edition, e.g. 'ce' for cloud, 'ee' for enterprise and 'te' for team"
+  type        = string
+}
+
 variable "cloud_user" {
   type = string
 }
