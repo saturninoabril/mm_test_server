@@ -1,6 +1,7 @@
 #!/bin/sh
 
-echo Edition: $WORKSPACE
+echo Workspace: $WORKSPACE
+echo Edition: $EDITION
 echo Docker Image: $DOCKER_IMAGE
 echo Docker Tag: $DOCKER_TAG
 echo Instance count: $INSTANCE_COUNT
@@ -16,6 +17,7 @@ terraform workspace show
 
 echo "terraform apply --auto-approve:"
 terraform apply \
+  -var="edition=$EDITION" \
   -var="mattermost_docker_image=$DOCKER_IMAGE" \
   -var="mattermost_docker_tag=$DOCKER_TAG" \
   -var="instance_count=$INSTANCE_COUNT" \

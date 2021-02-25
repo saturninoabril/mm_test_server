@@ -19,7 +19,13 @@
                 "envname": "WORKSPACE",
                 "source": "url",
                 "name": "workspace"
-            },{
+            },
+            {
+                "envname": "EDITION",
+                "source": "url",
+                "name": "edition"
+            },
+            {
                 "envname": "INSTANCE_COUNT",
                 "source": "url",
                 "name": "instance-count"
