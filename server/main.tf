@@ -201,23 +201,16 @@ data "template_file" "user_data" {
       -e MINIO_SSE_MASTER_KEY="my-minio-key:6368616e676520746869732070617373776f726420746f206120736563726574" \
       minio/minio:RELEASE.2019-10-11T00-38-09Z server /data
 
-    # cd ~/
-    # mkdir keycloak_setup
-    # curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker-compose/docker/keycloak/realm.json --output ~/keycloak_setup/realm.json
-    # cd keycloak_setup
-    # sed -i "s/localhost/$${app_instance_url}/gi" realm.json
-    # sudo chown -R 2000:2000 ~/keycloak_setup/
-
     # Run Keycloak for SAML
-    # sudo docker run -d \
-    #   --name mm-keycloak \
-    #   -p 8484:8080 \
-    #   -e KEYCLOAK_USER=mmuser \
-    #   -e KEYCLOAK_PASSWORD=mostest \
-    #   -e DB_VENDOR=h2 \
-    #   -e KEYCLOAK_IMPORT=/setup/realm.json \
-    #   -v $HOME/keycloak_setup:/setup \
-    #   jboss/keycloak:10.0.2
+    sudo docker run -d \
+      --name mm-keycloak \
+      -p 8484:8080 \
+      -e KEYCLOAK_USER=mmuser \
+      -e KEYCLOAK_PASSWORD=mostest \
+      -e DB_VENDOR=h2 \
+      jboss/keycloak:10.0.2
+
+    sleep 10
 
     # Run webhook for UI testing
     sudo docker run -d \
@@ -294,6 +287,13 @@ data "template_file" "user_data" {
     docker exec mm-openldap bash -c 'echo -e "dn: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev.two,ou=testusers,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
 
     docker exec mm-openldap bash -c 'echo -e "dn: cn=developers,ou=testgroups,dc=mm,dc=test,dc=com\nchangetype: add\nobjectclass: groupOfUniqueNames\nuniqueMember: uid=dev-ops.one,ou=testusers,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-one,ou=testgroups,dc=mm,dc=test,dc=com\nuniqueMember: cn=team-two,ou=testgroups,dc=mm,dc=test,dc=com" | ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest'
+
+
+    sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user mmuser --password mostest'
+    sleep 10
+    sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh update realms/master -s sslRequired=NONE'
+
+    sudo docker restart mm-keycloak
 
     sudo docker restart mm-app
     sleep 10
