@@ -43,7 +43,12 @@
             {
                 "envname": "ELASTICSEARCH_INSTANCE",
                 "source": "url",
-                "name": "es"
+                "name": "elasticsearch"
+            },
+            {
+                "envname": "WITH_KEYCLOAK",
+                "source": "url",
+                "name": "keycloak"
             }
         ]
     },

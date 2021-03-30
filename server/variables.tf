@@ -53,6 +53,16 @@ variable "mm_instance_type" {
   default = "t3.micro"
 }
 
+variable "mm_bigger_instance_type" {
+  type    = string
+  default = "t3.small"
+}
+
+variable "with_keycloak" {
+  type    = bool
+  default = false
+}
+
 variable "tls" {
   type    = bool
   default = false
