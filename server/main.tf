@@ -370,7 +370,7 @@ resource "aws_instance" "this" {
   count = local.instance_count
 
   ami               = data.aws_ami.ubuntu.id
-  instance_type     = var.with_keycloak ? var.mm_bigger_instance_type : var.mm_instance_type
+  instance_type     = var.with_keycloak && (count.index + 1) == local.instance_count ? var.mm_bigger_instance_type : var.mm_instance_type
   availability_zone = var.availability_zone
   key_name          = var.key_name
   root_block_device {
