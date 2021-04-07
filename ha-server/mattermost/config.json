@@ -2,7 +2,7 @@
     "ServiceSettings": {
         "SiteURL": "http://localhost:8065",
         "WebsocketURL": "",
-        "LicenseFileLocation": "/tmp/mm/mattermost.mattermost-license",
+        "LicenseFileLocation": "/tmp/mattermost.mattermost-license",
         "ListenAddress": ":8065",
         "ConnectionSecurity": "",
         "TLSCertFile": "",
