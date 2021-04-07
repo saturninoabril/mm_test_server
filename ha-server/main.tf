@@ -104,8 +104,6 @@ data "template_file" "user_data" {
 
     cd /tmp
     mkdir mm
-    sudo chown -R 2000:2000 /tmp/mm
-    sudo chown -R 2000:2000 /tmp/mm
 
     # copy server license
     cd /tmp/mm
@@ -113,7 +111,12 @@ data "template_file" "user_data" {
     echo $${license} > mattermost.mattermost-license
 
     # copy config.json to tmp/mm/config/config.json
-    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/ha-server/mattermost/config.json --output /tmp/mm/config.json
+    cd /tmp/mm
+    mkdir config
+    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/ha-server/mattermost/config.json --output /tmp/mm/config/config.json
+
+    sudo chown -R 2000:2000 /tmp/mm
+    sudo chown -R 2000:2000 /tmp/mm
 
     sudo docker run -d \
         --link db \
@@ -123,6 +126,9 @@ data "template_file" "user_data" {
         -v /tmp/mm/:/tmp/ \
         --name app \
         mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
+
+    # allow some time for the first 
+    sleep 30
 
     sudo docker run -d \
         --link db \
@@ -134,13 +140,22 @@ data "template_file" "user_data" {
         --name app1 \
         mattermost/$${mattermost_docker_image}:$${mattermost_docker_tag}
 
-    # copy ha-mattermost to /tmp/nginx/nginx.conf
-    curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/ha-server/nginx/nginx.conf --output /tmp/nginx/nginx.conf
+    sudo apt install nginx -y
+    sudo ufw app list
+    sudo ufw allow 'Nginx HTTP'
+    sudo ufw status
+    sudo systemctl status nginx
 
-    sudo docker run -d \
-        -v /tmp/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
-        --name mm-nginx \
-        nginx
+    # copy ha-mattermost to /tmp/nginx/nginx.conf
+    cd /tmp
+    mkdir nginx
+    sudo curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/ha-server/nginx/ha-mattermost --output /etc/nginx/sites-available/ha-mattermost
+
+    sudo ln -s /etc/nginx/sites-available/ha-mattermost /etc/nginx/sites-enabled/ha-mattermost
+    sudo unlink /etc/nginx/sites-enabled/default
+    sudo rm /etc/nginx/sites-available/default
+
+    sudo systemctl restart nginx
 
     EOF
 }
