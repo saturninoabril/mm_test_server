@@ -41,7 +41,7 @@
                 "name": "docker-tag"
             },
             {
-                "envname": "ELASTICSEARCH_INSTANCE",
+                "envname": "WITH_ELASTICSEARCH",
                 "source": "url",
                 "name": "elasticsearch"
             },

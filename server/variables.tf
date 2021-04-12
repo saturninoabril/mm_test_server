@@ -48,40 +48,15 @@ variable "availability_zone" {
   default = "us-east-1a"
 }
 
-variable "mm_instance_type" {
-  type    = string
-  default = "t3.micro"
-}
-
-variable "mm_bigger_instance_type" {
-  type    = string
-  default = "t3.small"
-}
-
 variable "with_keycloak" {
   type    = bool
   default = false
 }
 
-variable "tls" {
+variable "with_elasticsearch" {
   type    = bool
   default = false
 }
-
-variable "common_instance_type" {
-  type    = string
-  default = "t3.small"
-}
-
-variable "elasticsearch_instance" {
-  type    = number
-  default = 0
-}
-
-# variable "cypress_instance_type" {
-#   type    = string
-#   default = "t3.medium"
-# }
 
 variable "route53_zone_name" {
   type = string
