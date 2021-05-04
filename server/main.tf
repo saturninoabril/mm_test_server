@@ -85,6 +85,8 @@ data "template_file" "init" {
     license                 = local.license
     with_elasticsearch      = var.with_elasticsearch
     with_keycloak           = var.with_keycloak
+    docker_username         = var.docker_username
+    docker_password         = var.docker_password
   }
 }
 resource "aws_route53_record" "this" {

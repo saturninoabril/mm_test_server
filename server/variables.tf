@@ -14,6 +14,14 @@ variable "edition" {
   default     = "te"
 }
 
+variable "docker_username" {
+  type = string
+}
+
+variable "docker_password" {
+  type = string
+}
+
 variable "cloud_user" {
   type = string
 }

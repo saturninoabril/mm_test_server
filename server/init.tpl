@@ -20,6 +20,9 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker ubuntu
 
+# Docker login
+echo ${docker_password} | sudo docker login --username ${docker_username} --password-stdin
+
 # Set DB config
 export MM_SQLSETTINGS_DRIVERNAME="postgres"
 export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
@@ -67,7 +70,7 @@ sudo docker run -d \
     -p 10025:10025 \
     -p 10080:10080 \
     -p 10110:10110 \
-    jhillyerd/inbucket:release-1.2.0
+    inbucket/inbucket:stable
 
 sudo docker run -d \
     --name mm-openldap \
@@ -85,6 +88,7 @@ mkdir mattermost_data
 curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
 
 echo "Modify config"
+jq '.ElasticsearchSettings.ConnectionUrl = "http://mm-elasticsearch:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 # jq '.ElasticsearchSettings.EnableIndexing = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 # jq '.ElasticsearchSettings.EnableSearching = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 # jq '.ElasticsearchSettings.EnableAutocomplete = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
@@ -105,39 +109,38 @@ echo ${license} > mattermost.mattermost-license
 if "${with_elasticsearch}" -eq "true"; then
     echo "Start mm-app with mm-elasticsearch"
     sudo docker run -d \
-    --name mm-app \
-    --link mm-db \
-    --link mm-openldap \
-    --link mm-inbucket \
-    --link mm-elasticsearch \
-    -p 8065:8065 \
-    -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-    -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-    -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
-    -e MM_ELASTICSEARCHSETTINGS_CONNECTIONURL=http://mm-elasticsearch:9200 \
-    -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
-    -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
-    -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-    -v $HOME/mattermost_config:/mattermost/config \
-    -v $HOME/mattermost_data:/mattermost/data \
-    mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
+        --name mm-app \
+        --link mm-db \
+        --link mm-openldap \
+        --link mm-inbucket \
+        --link mm-elasticsearch \
+        -p 8065:8065 \
+        -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
+        -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
+        -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
+        -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
+        -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
+        -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
+        -v $HOME/mattermost_config:/mattermost/config \
+        -v $HOME/mattermost_data:/mattermost/data \
+        mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
 else
     echo "Start mm-app without elasticsearch"
     sudo docker run -d \
-    --name mm-app \
-    --link mm-db \
-    --link mm-openldap \
-    --link mm-inbucket \
-    -p 8065:8065 \
-    -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-    -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-    -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
-    -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
-    -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
-    -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-    -v $HOME/mattermost_config:/mattermost/config \
-    -v $HOME/mattermost_data:/mattermost/data \
-    mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
+        --name mm-app \
+        --link mm-db \
+        --link mm-openldap \
+        --link mm-inbucket \
+        -p 8065:8065 \
+        -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
+        -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
+        -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
+        -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
+        -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
+        -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
+        -v $HOME/mattermost_config:/mattermost/config \
+        -v $HOME/mattermost_data:/mattermost/data \
+        mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
 fi
 
 # Run MinIO object storage
