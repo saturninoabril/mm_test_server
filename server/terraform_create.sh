@@ -20,7 +20,7 @@ echo "terraform apply --auto-approve:"
 terraform apply \
   -var="edition=$EDITION" \
   -var="mattermost_docker_image=$DOCKER_IMAGE" \
-  -var="mattermost_docker_tag=$DOCKER_TAG" \
+  -var="mattermost_docker_tag=${DOCKER_TAG}" \
   -var="instance_count=$INSTANCE_COUNT" \
   -var="with_keycloak=$WITH_KEYCLOAK" \
   -var="with_elasticsearch=$WITH_ELASTICSEARCH" \
