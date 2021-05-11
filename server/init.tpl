@@ -70,7 +70,7 @@ sudo docker run -d \
     -p 10025:10025 \
     -p 10080:10080 \
     -p 10110:10110 \
-    inbucket/inbucket:stable
+    mattermost/inbucket:release-1.2.0
 
 sudo docker run -d \
     --name mm-openldap \
@@ -89,9 +89,9 @@ curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server
 
 echo "Modify config"
 jq '.ElasticsearchSettings.ConnectionUrl = "http://mm-elasticsearch:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-# jq '.ElasticsearchSettings.EnableIndexing = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-# jq '.ElasticsearchSettings.EnableSearching = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
-# jq '.ElasticsearchSettings.EnableAutocomplete = ${with_elasticsearch}' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.ElasticsearchSettings.EnableIndexing = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.ElasticsearchSettings.EnableSearching = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.ElasticsearchSettings.EnableAutocomplete = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ElasticsearchSettings.Sniff = false' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ServiceSettings.ListenAddress = ":8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ServiceSettings.SiteURL = "http://${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
