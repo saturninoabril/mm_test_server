@@ -23,6 +23,9 @@ sudo usermod -aG docker ubuntu
 # Docker login
 echo ${docker_password} | sudo docker login --username ${docker_username} --password-stdin
 
+# Set feature flags
+export MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=true
+
 # Set DB config
 export MM_SQLSETTINGS_DRIVERNAME="postgres"
 export MM_SQLSETTINGS_DATASOURCE="postgres://mmuser:mostest@mm-db:5432/mattermost_test?sslmode=disable&connect_timeout=10"
@@ -121,6 +124,7 @@ if "${with_elasticsearch}" -eq "true"; then
         -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
         -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
         -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
+        -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
         -v $HOME/mattermost_config:/mattermost/config \
         -v $HOME/mattermost_data:/mattermost/data \
         mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
@@ -138,6 +142,7 @@ else
         -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
         -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
         -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
+        -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
         -v $HOME/mattermost_config:/mattermost/config \
         -v $HOME/mattermost_data:/mattermost/data \
         mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
