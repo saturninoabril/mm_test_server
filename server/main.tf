@@ -58,6 +58,12 @@ data "aws_route53_zone" "selected" {
 
 locals {
   instance_count = var.instance_count > var.max_instance_count ? var.max_instance_count : var.instance_count
+  instance_type  = var.with_elasticsearch ? "t3.medium" : var.with_keycloak ? "t3.small" : "t3.micro"
+  spot_price = lookup({
+    "t3.medium" = "0.015",
+    "t3.small"  = "0.009",
+    "t3.micro"  = "0.005",
+  }, local.instance_type, "0.005")
 
   license = lookup({
     "ce"                      = var.cloud_user,
@@ -89,24 +95,17 @@ data "template_file" "init" {
     docker_password         = var.docker_password
   }
 }
-resource "aws_route53_record" "this" {
-  count = local.instance_count
-
-  zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
-  type    = "A"
-  ttl     = "300"
-  records = [aws_instance.this[count.index].public_ip]
-}
 
 # Create AWS Instance for individual mm-app server
-resource "aws_instance" "this" {
+resource "aws_spot_instance_request" "this" {
   count = local.instance_count
 
-  ami               = data.aws_ami.ubuntu.id
-  instance_type     = var.with_elasticsearch ? "t3.medium" : var.with_keycloak ? "t3.small" : "t3.micro"
-  availability_zone = var.availability_zone
-  key_name          = var.key_name
+  ami                  = data.aws_ami.ubuntu.id
+  instance_type        = local.instance_type
+  spot_price           = local.spot_price
+  wait_for_fulfillment = true
+  availability_zone    = var.availability_zone
+  key_name             = var.key_name
   root_block_device {
     volume_size = 20
   }
@@ -120,4 +119,14 @@ resource "aws_instance" "this" {
     Name  = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
     Owner = local.url_base_prefix
   }
+}
+
+resource "aws_route53_record" "this" {
+  count = local.instance_count
+
+  zone_id = data.aws_route53_zone.selected.zone_id
+  name    = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
+  type    = "A"
+  ttl     = "300"
+  records = [aws_spot_instance_request.this[count.index].public_ip]
 }

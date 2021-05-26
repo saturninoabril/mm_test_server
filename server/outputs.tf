@@ -7,10 +7,10 @@ output "server_aws_route53_record" {
 
 output "server_public_dns" {
   description = "Test Server Public DNS"
-  value       = aws_instance.this.*.public_dns
+  value       = aws_spot_instance_request.this.*.public_dns
 }
 
 output "server_public_ip" {
   description = "Test Server Public IP"
-  value       = aws_instance.this.*.public_ip
+  value       = aws_spot_instance_request.this.*.public_ip
 }
