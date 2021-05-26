@@ -36,3 +36,7 @@ override.tf.json
 *.tar.gz
 
 *.pem
+
+# Gitlab Runner prod config
+config.toml
+.env
