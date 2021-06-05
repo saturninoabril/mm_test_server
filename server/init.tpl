@@ -188,8 +188,6 @@ cd mm-e2e-webhook
 npm install axios express client-oauth2@larkox/js-client-oauth2#e24e2eb5dfcbbbb3a59d095e831dbe0012b0ac49
 nohup node webhook_serve.js > output.log &
 
-sudo docker exec mm-app sh -c 'mattermost sampledata -w 4 -u 60'
-# sudo docker restart mm-app
 sleep 10
 
 echo "Show config after restart"

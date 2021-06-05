@@ -12,3 +12,7 @@ terraform workspace show
 
 echo "terraform destroy --auto-approve:"
 terraform destroy --auto-approve -lock=false
+
+echo "terraform delete workspace"
+terraform workspace select default
+terraform workspace delete $WORKSPACE
