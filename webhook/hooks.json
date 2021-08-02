@@ -74,5 +74,86 @@
                 "name": "workspace"
             }
         ]
+    },
+    {
+        "id": "create-rfqa-cloud-server",
+        "execute-command": "/home/ubuntu/mm_test_server/rfqa-cloud-server/terraform_create.sh",
+        "command-working-directory": "/home/ubuntu/mm_test_server/rfqa-cloud-server",
+        "response-message": "Creating RFQA Cloud test servers...",
+        "trigger-rule": {
+            "match": {
+                "type": "value",
+                "value": "change",
+                "parameter": {
+                    "source": "url",
+                    "name": "change"
+                }
+            }
+        },
+        "pass-environment-to-command": [
+            {
+                "envname": "WORKSPACE",
+                "source": "url",
+                "name": "workspace"
+            },
+            {
+                "envname": "INSTANCE_COUNT",
+                "source": "url",
+                "name": "instance-count"
+            },
+            {
+                "envname": "DOCKER_IMAGE",
+                "source": "url",
+                "name": "docker-image"
+            },
+            {
+                "envname": "DOCKER_TAG",
+                "source": "url",
+                "name": "docker-tag"
+            },
+            {
+                "envname": "EDITION",
+                "source": "url",
+                "name": "edition"
+            },
+            {
+                "envname": "MM_CLOUD_API_KEY",
+                "source": "url",
+                "name": "api-key"
+            },
+            {
+                "envname": "MM_CUSTOMER_ID",
+                "source": "url",
+                "name": "customer-id"
+            },
+            {
+                "envname": "MM_CLOUD_INSTALLATION_ID",
+                "source": "url",
+                "name": "installation-id"
+            }
+        ]
+    },
+    {
+        "id": "destroy-rfqa-cloud-server",
+        "execute-command": "/home/ubuntu/mm_test_server/rfqa-cloud-server/terraform_destroy.sh",
+        "command-working-directory": "/home/ubuntu/mm_test_server/rfqa-cloud-server",
+        "response-message": "Destroying RFQA Cloud test servers...",
+        "trigger-rule": {
+            "match": {
+                "type": "value",
+                "value": "change",
+                "parameter": {
+                    "source": "url",
+                    "name": "change"
+                }
+            }
+        },
+        "pass-environment-to-command": [
+            {
+                "envname": "WORKSPACE",
+                "source": "url",
+                "name": "workspace"
+            }
+        ]
     }
 ]
