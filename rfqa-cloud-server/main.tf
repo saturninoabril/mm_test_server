@@ -69,8 +69,6 @@ locals {
     "cloud-professional"      = var.cloud_professional,
     "cloud-enterprise"        = var.cloud_enterprise,
   }, var.edition, "cloud-enterprise")
-
-  url_base_prefix = substr(format("%s-%s-%s", terraform.workspace, var.edition, var.mattermost_docker_tag), 0, 45)
 }
 
 # ------------------------------------------------------------------
@@ -84,7 +82,7 @@ data "template_file" "init" {
   template = file("init.tpl")
 
   vars = {
-    app_instance_url        = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
+    app_instance_url        = format("%s-%d.%s", terraform.workspace, count.index + 1, var.route53_zone_name)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
@@ -104,7 +102,7 @@ resource "aws_spot_instance_request" "this" {
   count = local.instance_count
 
   ami                  = data.aws_ami.ubuntu.id
-  instance_type        = local.instance_type
+  instance_type        = var.instance_type
   spot_price           = local.spot_price
   spot_type            = "one-time"
   wait_for_fulfillment = true
@@ -120,8 +118,8 @@ resource "aws_spot_instance_request" "this" {
   user_data = data.template_file.init[count.index].rendered
 
   tags = {
-    Name  = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
-    Owner = local.url_base_prefix
+    Name  = var.instance_count > 1 || var.use_num_suffix ? format("%s-%d.%s", terraform.workspace, count.index + 1, var.route53_zone_name) : var.mattermost_docker_tag
+    Owner = terraform.workspace
   }
 }
 
@@ -129,7 +127,7 @@ resource "aws_route53_record" "this" {
   count = local.instance_count
 
   zone_id = data.aws_route53_zone.selected.zone_id
-  name    = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
+  name    = format("%s-%d.%s", terraform.workspace, count.index + 1, var.route53_zone_name)
   type    = "A"
   ttl     = "300"
   records = [aws_spot_instance_request.this[count.index].public_ip]

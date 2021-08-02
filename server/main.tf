@@ -103,6 +103,7 @@ resource "aws_spot_instance_request" "this" {
   ami                  = data.aws_ami.ubuntu.id
   instance_type        = local.instance_type
   spot_price           = local.spot_price
+  spot_type            = "one-time"
   wait_for_fulfillment = true
   availability_zone    = var.availability_zone
   key_name             = var.key_name

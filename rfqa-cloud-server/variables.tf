@@ -1,11 +1,11 @@
 variable "mattermost_docker_image" {
-  description = "Mattermost edition, e.g. mm-ee-test, mm-ee-cloud"
+  description = "Mattermost docker image, e.g. mm-ee-test, mm-ee-cloud"
   type        = string
   default     = "mm-ee-test"
 }
 
 variable "mattermost_docker_tag" {
-  description = "Mattermost image tag, e.g. 4481_296076bf_742d725e_b3f2bc2a, test, cloud-2021-07-29-1"
+  description = "Mattermost docker image tag, e.g. 4481_296076bf_742d725e_b3f2bc2a, test, cloud-2021-07-29-1"
   type        = string
   default     = "test"
 }
@@ -33,12 +33,22 @@ variable "cloud_installation_id" {
 
 variable "cloud_cws_url" {
   type = string
-  default = "http://cws-test-server.dev.spinmint.com:8076"
 }
 
 variable "cloud_cws_api_url" {
   type = string
-  default = "http://cws-test-server.dev.spinmint.com:8076"
+}
+
+variable "cloud_starter" {
+  type = string
+}
+
+variable "cloud_professional" {
+  type = string
+}
+
+variable "cloud_enterprise" {
+  type = string
 }
 
 variable "docker_username" {
@@ -59,6 +69,11 @@ variable "max_instance_count" {
   description = "Max number of instances to launch"
   type        = number
   default     = 1
+}
+
+variable "instance_type" {
+  description = "Instance type to launch"
+  type = string
 }
 
 variable "key_name" {

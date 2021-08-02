@@ -11,7 +11,8 @@ sudo apt-get install -y \
     ldap-utils \
     gcc \
     g++ \
-    make
+    make \
+    unzip
 
 export HOME=/home/ubuntu
 
@@ -57,8 +58,7 @@ sudo docker run -d \
     -p 10025:10025 \
     -p 10080:10080 \
     -p 10110:10110 \
-    inbucket/inbucket:stable
-
+    mattermost/inbucket:release-1.2.0
 
 # -----------------
 # Run LDAP
@@ -99,7 +99,7 @@ cd $HOME/mattermost_config
 touch mattermost.mattermost-license
 echo ${license} > mattermost.mattermost-license
 
-echo "Start mm-app without elasticsearch"
+echo "Start mm-app"
 sudo docker run -d \
     --name mm-app \
     --link mm-db \
@@ -111,8 +111,8 @@ sudo docker run -d \
     -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
     -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
     -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-    -e MM_CUSTOMER_ID=${cloud_customer_id} \
     -e MM_CLOUD_API_KEY=${cloud_api_key} \
+    -e MM_CUSTOMER_ID=${cloud_customer_id} \
     -e MM_CLOUD_INSTALLATION_ID=${cloud_installation_id} \
     -v $HOME/mattermost_config:/mattermost/config \
     -v $HOME/mattermost_data:/mattermost/data \
@@ -152,3 +152,18 @@ sudo docker exec mm-app sh -c 'mattermost config show'
 sudo docker restart mm-app
 sleep 10
 until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
+
+# -----------------
+# Create initial data
+# -----------------
+
+echo "Install deno"
+curl -fsSL https://deno.land/x/install/install.sh | sh
+
+export DENO_INSTALL="/home/ubuntu/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
+deno --version
+
+deno run --allow-net https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/init_server.ts
+
+echo "Done"
