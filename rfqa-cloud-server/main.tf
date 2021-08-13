@@ -65,9 +65,9 @@ locals {
   }, var.instance_type, "0.005")
 
   license = lookup({
-    "cloud-starter"           = var.cloud_starter,
-    "cloud-professional"      = var.cloud_professional,
-    "cloud-enterprise"        = var.cloud_enterprise,
+    "cloud-starter"      = var.cloud_starter,
+    "cloud-professional" = var.cloud_professional,
+    "cloud-enterprise"   = var.cloud_enterprise,
   }, var.edition, "cloud-enterprise")
 }
 
@@ -129,6 +129,6 @@ resource "aws_route53_record" "this" {
   zone_id = data.aws_route53_zone.selected.zone_id
   name    = format("%s-%d.%s", terraform.workspace, count.index + 1, var.route53_zone_name)
   type    = "A"
-  ttl     = "300"
+  ttl     = "5"
   records = [aws_spot_instance_request.this[count.index].public_ip]
 }
