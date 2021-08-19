@@ -25,6 +25,7 @@ echo ${docker_password} | sudo docker login --username ${docker_username} --pass
 
 # Set feature flags
 export MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=true
+export MM_FEATUREFLAGS_COLLAPSEDTHREADS=true
 
 # Set DB config
 export MM_SQLSETTINGS_DRIVERNAME="postgres"
@@ -125,6 +126,7 @@ if "${with_elasticsearch}" -eq "true"; then
         -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
         -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
         -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
+        -e MM_FEATUREFLAGS_COLLAPSEDTHREADS=$MM_FEATUREFLAGS_COLLAPSEDTHREADS \
         -v $HOME/mattermost_config:/mattermost/config \
         -v $HOME/mattermost_data:/mattermost/data \
         mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
@@ -143,6 +145,7 @@ else
         -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
         -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
         -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
+        -e MM_FEATUREFLAGS_COLLAPSEDTHREADS=$MM_FEATUREFLAGS_COLLAPSEDTHREADS \
         -v $HOME/mattermost_config:/mattermost/config \
         -v $HOME/mattermost_data:/mattermost/data \
         mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
