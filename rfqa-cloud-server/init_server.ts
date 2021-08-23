@@ -246,9 +246,9 @@ async function createUser(
 
   const createdUser = await response.json();
 
-  if (cookie) {
-    await skipTutorialAndCloudOnboarding(baseUrl, createdUser.id, cookie);
-  }
+  // if (cookie) {
+  //   await skipTutorialAndCloudOnboarding(baseUrl, createdUser.id, cookie);
+  // }
 
   return createdUser;
 }
@@ -288,7 +288,7 @@ async function skipTutorialAndCloudOnboarding(
     {
       user_id: userId,
       category: "recommended_next_steps",
-      name: "hide",
+      name: "skip",
       value: "true",
     },
   ];

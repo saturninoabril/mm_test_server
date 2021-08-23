@@ -101,7 +101,8 @@
         "CollapsedThreads": "disabled",
         "ManagedResourcePaths": "",
         "EnableLegacySidebar": false,
-        "EnableReliableWebSockets": true
+        "EnableReliableWebSockets": true,
+        "EnableOnboardingFlow": false
     },
     "TeamSettings": {
         "SiteName": "Mattermost",
