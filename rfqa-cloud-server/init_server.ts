@@ -247,7 +247,7 @@ async function createUser(
   const createdUser = await response.json();
 
   if (cookie) {
-    await skipTutorialAndCloudOnboarding(baseUrl, createdUser.id, cookie);
+    await updateUserPreference(baseUrl, createdUser.id, cookie);
   }
 
   return createdUser;
@@ -273,11 +273,41 @@ async function patchUserRole(
   return response.json();
 }
 
-async function skipTutorialAndCloudOnboarding(
+async function updateUserPreference(
   baseUrl: string,
   userId: string,
   cookie: Cookie,
 ) {
+  // Sapphire theme as default
+  const sapphireTheme = {
+    type: 'Sapphire',
+    sidebarBg: '#174ab5',
+    sidebarText: '#ffffff',
+    sidebarUnreadText: '#ffffff',
+    sidebarTextHoverBg: '#2a58ba',
+    sidebarTextActiveBorder: '#57b5f0',
+    sidebarTextActiveColor: '#ffffff',
+    sidebarHeaderBg: '#1542a2',
+    sidebarHeaderTextColor: '#ffffff',
+    sidebarTeamBarBg: '#133a91',
+    onlineIndicator: '#3db887',
+    awayIndicator: '#ffbc1f',
+    dndIndicator: '#d24b4e',
+    mentionBg: '#ffffff',
+    mentionBj: '#ffffff',
+    mentionColor: '#174ab5',
+    centerChannelBg: '#ffffff',
+    centerChannelColor: '#3f4350',
+    newMessageSeparator: '#15b7b7',
+    linkColor: '#1c58d9',
+    buttonBg: '#1c58d9',
+    buttonColor: '#ffffff',
+    errorTextColor: '#d24b4e',
+    mentionHighlightBg: '#7ff0f0',
+    mentionHighlightLink: '#0d6e6e',
+    codeTheme: 'github',
+  };
+
   const preferences = [
     {
       user_id: userId,
@@ -287,9 +317,9 @@ async function skipTutorialAndCloudOnboarding(
     },
     {
       user_id: userId,
-      category: "recommended_next_steps",
-      name: "skip",
-      value: "true",
+      category: "theme",
+      name: "",
+      value: sapphireTheme,
     },
   ];
   const headers = getHeaders(cookie);
