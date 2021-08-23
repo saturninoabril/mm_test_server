@@ -319,7 +319,7 @@ async function updateUserPreference(
       user_id: userId,
       category: "theme",
       name: "",
-      value: sapphireTheme,
+      value: JSON.stringify(sapphireTheme),
     },
   ];
   const headers = getHeaders(cookie);
@@ -335,7 +335,7 @@ async function updateUserPreference(
   if (!response.ok) {
     await throwError(
       response,
-      "Failed to update user preference to skip tutorial and/or cloud onboarding",
+      "Failed to update user preferences",
     );
   }
 
