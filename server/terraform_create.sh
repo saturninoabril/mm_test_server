@@ -5,8 +5,7 @@ echo Edition: $EDITION
 echo Docker Image: $DOCKER_IMAGE
 echo Docker Tag: $DOCKER_TAG
 echo Instance count: $INSTANCE_COUNT
-echo Instance with Keycloak: $WITH_KEYCLOAK
-echo Instance with Elasticsearch: $WITH_ELASTICSEARCH
+echo Instance with MM env variables: $MM_ENV
 
 terraform workspace select $WORKSPACE || terraform workspace new $WORKSPACE
 
@@ -22,7 +21,6 @@ terraform apply \
   -var="mattermost_docker_image=$DOCKER_IMAGE" \
   -var="mattermost_docker_tag=${DOCKER_TAG}" \
   -var="instance_count=$INSTANCE_COUNT" \
-  -var="with_keycloak=$WITH_KEYCLOAK" \
-  -var="with_elasticsearch=$WITH_ELASTICSEARCH" \
+  -var="mm_env=$MM_ENV" \
   --auto-approve \
   -lock=false

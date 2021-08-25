@@ -58,7 +58,7 @@ data "aws_route53_zone" "selected" {
 
 locals {
   instance_count = var.instance_count > var.max_instance_count ? var.max_instance_count : var.instance_count
-  instance_type  = var.with_elasticsearch ? "t3.medium" : var.with_keycloak ? "t3.small" : "t3.micro"
+  instance_type  = "t3.medium"
   spot_price = lookup({
     "t3.medium" = "0.015",
     "t3.small"  = "0.009",
@@ -88,9 +88,8 @@ data "template_file" "init" {
     app_instance_url        = format("%s-%d.%s", local.url_base_prefix, count.index + 1, var.route53_zone_name)
     mattermost_docker_image = var.mattermost_docker_image
     mattermost_docker_tag   = var.mattermost_docker_tag
+    mm_env                  = var.mm_env
     license                 = local.license
-    with_elasticsearch      = var.with_elasticsearch
-    with_keycloak           = var.with_keycloak
     docker_username         = var.docker_username
     docker_password         = var.docker_password
   }

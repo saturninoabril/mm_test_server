@@ -8,6 +8,10 @@ variable "mattermost_docker_tag" {
   type        = string
 }
 
+variable "mm_env" {
+  description = "Mattermost environment variables, semicolon (;) separated for multiple k/v pairs, e.g. MM_FEATUREFLAGS_GLOBALHEADER=true"
+}
+
 variable "edition" {
   description = "Mattermost edition, e.g. 'ce' for cloud, 'ee' for enterprise and 'te' for team"
   type        = string
@@ -54,16 +58,6 @@ variable "region" {
 variable "availability_zone" {
   type    = string
   default = "us-east-1a"
-}
-
-variable "with_keycloak" {
-  type    = bool
-  default = false
-}
-
-variable "with_elasticsearch" {
-  type    = bool
-  default = false
 }
 
 variable "route53_zone_name" {

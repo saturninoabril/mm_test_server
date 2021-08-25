@@ -41,23 +41,21 @@ curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server
 cd docker && mkdir keycloak
 curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/docker-compose/docker/keycloak/realm.json --output ~/docker-compose/docker/keycloak/realm.json
 
-if "${with_elasticsearch}" -eq "true"; then
-    # Run Elasticsearch
-    sudo docker run -d \
-        --name mm-elasticsearch \
-        -p 9200:9200 \
-        -e http.host="0.0.0.0" \
-        -e http.port=9200 \
-        -e http.cors.enabled="true" \
-        -e http.cors.allow-origin="http://localhost:1358,http://127.0.0.1:1358" \
-        -e http.cors.allow-headers="X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
-        -e http.cors.allow-credentials="true" \
-        -e transport.host="127.0.0.1" \
-        -e ES_JAVA_OPTS="-Xmx1024m -Xms1024m" \
-        mattermost/mattermost-elasticsearch-docker:6.5.1
+# Run Elasticsearch
+sudo docker run -d \
+    --name mm-elasticsearch \
+    -p 9200:9200 \
+    -e http.host="0.0.0.0" \
+    -e http.port=9200 \
+    -e http.cors.enabled="true" \
+    -e http.cors.allow-origin="http://localhost:1358,http://127.0.0.1:1358" \
+    -e http.cors.allow-headers="X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization" \
+    -e http.cors.allow-credentials="true" \
+    -e transport.host="127.0.0.1" \
+    -e ES_JAVA_OPTS="-Xmx1024m -Xms1024m" \
+    mattermost/mattermost-elasticsearch-docker:7.0.0
 
-    until curl --max-time 5 --output - http://localhost:9200; do echo waiting for app; sleep 5; done;
-fi
+until curl --max-time 5 --output - http://localhost:9200; do echo waiting for app; sleep 5; done;
 
 # Run PostgreSQL DB
 sudo docker run -d \
@@ -109,47 +107,41 @@ cd ~/mattermost_config
 touch mattermost.mattermost-license
 echo ${license} > mattermost.mattermost-license
 
-# Run Mattermost mm-app
-if "${with_elasticsearch}" -eq "true"; then
-    echo "Start mm-app with mm-elasticsearch"
-    sudo docker run -d \
-        --name mm-app \
-        --link mm-db \
-        --link mm-openldap \
-        --link mm-inbucket \
-        --link mm-elasticsearch \
-        -p 8065:8065 \
-        -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-        -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-        -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
-        -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
-        -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
-        -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-        -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
-        -e MM_FEATUREFLAGS_COLLAPSEDTHREADS=$MM_FEATUREFLAGS_COLLAPSEDTHREADS \
-        -v $HOME/mattermost_config:/mattermost/config \
-        -v $HOME/mattermost_data:/mattermost/data \
-        mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
+# Set env variables
+cd ~/mattermost_config
+env_file=mm_req.env
+touch $env_file
+
+if [ -z "${mm_env}" ]
+then
+  echo "No env variable from the request"
 else
-    echo "Start mm-app without elasticsearch"
-    sudo docker run -d \
-        --name mm-app \
-        --link mm-db \
-        --link mm-openldap \
-        --link mm-inbucket \
-        -p 8065:8065 \
-        -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-        -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-        -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
-        -e MM_PLUGINSETTINGS_ENABLEUPLOADS=true \
-        -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
-        -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-        -e MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED=$MM_FEATUREFLAGS_CUSTOMDATARETENTIONENABLED \
-        -e MM_FEATUREFLAGS_COLLAPSEDTHREADS=$MM_FEATUREFLAGS_COLLAPSEDTHREADS \
-        -v $HOME/mattermost_config:/mattermost/config \
-        -v $HOME/mattermost_data:/mattermost/data \
-        mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
+  echo "Received: ${mm_env}"
+
+  envarr=$(echo ${mm_env} | tr ";" "\n")
+  for env in $envarr; do echo "> [$env]"; echo "$env" >> $env_file; done;
 fi
+
+echo "MM_CLUSTERSETTINGS_READONLYCONFIG=false" >> $env_file
+echo "MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket" >> $env_file
+echo "MM_LDAPSETTINGS_LDAPSERVER=mm-openldap" >> $env_file
+echo "MM_PLUGINSETTINGS_ENABLEUPLOADS=true" >> $env_file
+echo "MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME" >> $env_file
+echo "MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE" >> $env_file
+
+# Run Mattermost mm-app
+echo "Start mm-app"
+sudo docker run -d \
+    --name mm-app \
+    --link mm-db \
+    --link mm-openldap \
+    --link mm-inbucket \
+    --link mm-elasticsearch \
+    -p 8065:8065 \
+    --env-file $HOME/mattermost_config/$env_file \
+    -v $HOME/mattermost_config:/mattermost/config \
+    -v $HOME/mattermost_data:/mattermost/data \
+    mattermost/${mattermost_docker_image}:${mattermost_docker_tag}
 
 # Run MinIO object storage
 sudo docker run -d \
@@ -162,13 +154,10 @@ sudo docker run -d \
 
 sudo docker exec mm-minio sh -c 'mkdir -p /data/mattermost-test'
 
-if "${with_keycloak}" -eq "true"; then
-    echo "Run Keycloak for SAML"
-    # Run Keycloak for SAML
-    sudo docker run -d --name mm-keycloak -p 8484:8080 -e KEYCLOAK_USER=mmuser -e KEYCLOAK_PASSWORD=mostest -e DB_VENDOR=h2 jboss/keycloak:10.0.2
-
-    sleep 10
-fi
+echo "Run Keycloak for SAML"
+# Run Keycloak for SAML
+sudo docker run -d --name mm-keycloak -p 8484:8080 -e KEYCLOAK_USER=mmuser -e KEYCLOAK_PASSWORD=mostest -e DB_VENDOR=h2 jboss/keycloak:10.0.2
+sleep 10
 
 # Install node
 cd ~/
@@ -199,13 +188,11 @@ sudo docker exec mm-app sh -c 'mattermost config show'
 cd ~/
 ldapadd -x -D "cn=admin,dc=mm,dc=test,dc=com" -w mostest -H ldap://localhost:389 -f docker-compose/docker/test-data.ldif -c
 
-if "${with_keycloak}" -eq "true"; then
-    sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user mmuser --password mostest'
-    sleep 10
-    sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh update realms/master -s sslRequired=NONE'
+sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user mmuser --password mostest'
+sleep 10
+sudo docker exec mm-keycloak bash -c 'cd $HOME/keycloak/bin && ./kcadm.sh update realms/master -s sslRequired=NONE'
 
-    sudo docker restart mm-keycloak
-fi
+sudo docker restart mm-keycloak
 
 sudo docker restart mm-app
 sleep 10
