@@ -90,7 +90,7 @@ mkdir mattermost_data
 curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/server/mattermost/config.json --output ~/mattermost_config/config.json
 
 echo "Modify config"
-jq '.ElasticsearchSettings.ConnectionUrl = "http://mm-elasticsearch:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.ElasticsearchSettings.ConnectionURL = "http://mm-elasticsearch:9200"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ElasticsearchSettings.EnableIndexing = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ElasticsearchSettings.EnableSearching = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ElasticsearchSettings.EnableAutocomplete = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
@@ -98,6 +98,12 @@ jq '.ElasticsearchSettings.Sniff = false' ~/mattermost_config/config.json|sponge
 jq '.ServiceSettings.ListenAddress = ":8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.ServiceSettings.SiteURL = "http://${app_instance_url}:8065"' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 jq '.TeamSettings.MaxUsersPerTeam = 2000' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.TeamSettings.EnableOpenServer = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.PasswordSettings.MinimumLength = 10' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.PasswordSettings.Lowercase = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.PasswordSettings.Number = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.PasswordSettings.Uppercase = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
+jq '.PasswordSettings.Symbol = true' ~/mattermost_config/config.json|sponge ~/mattermost_config/config.json
 sleep 5
 
 sudo chown -R 2000:2000 ~/mattermost_config/
