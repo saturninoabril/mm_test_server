@@ -58,11 +58,6 @@ data "aws_route53_zone" "selected" {
 
 locals {
   instance_count = var.instance_count > var.max_instance_count ? var.max_instance_count : var.instance_count
-  spot_price = lookup({
-    "t3.medium" = "0.015",
-    "t3.small"  = "0.009",
-    "t3.micro"  = "0.005",
-  }, var.instance_type, "0.005")
 
   license = lookup({
     "cloud-starter"      = var.cloud_starter,
@@ -98,16 +93,13 @@ data "template_file" "init" {
 }
 
 # Create AWS Instance for individual mm-app server
-resource "aws_spot_instance_request" "this" {
+resource "aws_instance" "this" {
   count = local.instance_count
 
-  ami                  = data.aws_ami.ubuntu.id
-  instance_type        = var.instance_type
-  spot_price           = local.spot_price
-  spot_type            = "one-time"
-  wait_for_fulfillment = true
-  availability_zone    = var.availability_zone
-  key_name             = var.key_name
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = var.instance_type
+  availability_zone = var.availability_zone
+  key_name          = var.key_name
   root_block_device {
     volume_size = 20
   }
@@ -130,5 +122,5 @@ resource "aws_route53_record" "this" {
   name    = format("%s-%d.%s", terraform.workspace, count.index + 1, var.route53_zone_name)
   type    = "A"
   ttl     = "5"
-  records = [aws_spot_instance_request.this[count.index].public_ip]
+  records = [aws_instance.this[count.index].public_ip]
 }
