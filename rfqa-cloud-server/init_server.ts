@@ -112,20 +112,31 @@ async function createInitialUsersAndTeams(server: string) {
     { name: "rainforest", display_name: "Rainforest", type: "O" },
   ];
 
+  // Get image for user profile
+  const profileImageUrl =
+    "https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/mattermost-icon.png";
+  const res = await fetch(profileImageUrl);
+  const profileImageData = await res.blob();
+
   const createdUsers: Record<string, User> = {};
   const createdTeams: Record<string, Team> = {};
 
   // Create the first user and as the default admin
-  const admin = await createUser(server, firstUserAsAdmin);
+  const admin = await createNewUser(server, firstUserAsAdmin);
   console.log(`* @${admin.username} first user/admin created`);
 
   // Login as default admin
+  // Do first visit to remove red dot in marketplace
+  // Upload admin's profile image
   const { cookie } = await loginUser(server, firstUserAsAdmin);
   await firstAdminVisit(server, cookie);
+  await uploadUserProfileImage(server, admin.id, profileImageData, cookie);
 
   // Create other admins
   const newAdminUsers = await Promise.all(
-    adminUsers.map((user) => createAdminUser(server, user, cookie)),
+    adminUsers.map((user) =>
+      createNewAdmin(server, user, profileImageData, cookie)
+    ),
   );
   newAdminUsers.sort(byName).forEach((user) => {
     console.log(`** @${user.username} admin created`);
@@ -134,7 +145,9 @@ async function createInitialUsersAndTeams(server: string) {
 
   // Create regular users
   const newRegularUsers = await Promise.all(
-    regularUsers.map((user) => createUser(server, user, cookie)),
+    regularUsers.map((user) =>
+      createNewUser(server, user, profileImageData, cookie)
+    ),
   );
   newRegularUsers.sort(byName).forEach((user) => {
     console.log(`*** @${user.username} user created`);
@@ -181,6 +194,37 @@ async function createInitialUsersAndTeams(server: string) {
   });
 }
 
+async function createNewAdmin(
+  baseUrl: string,
+  user: Partial<User>,
+  profileImageData: Blob,
+  cookie: Cookie,
+) {
+  const newAdmin = await createNewUser(baseUrl, user, profileImageData, cookie);
+  await patchUserRole(baseUrl, newAdmin.id, "system_admin system_user", cookie);
+
+  return newAdmin;
+}
+
+async function createNewUser(
+  baseUrl: string,
+  user: Partial<User>,
+  profileImageData?: Blob,
+  cookie?: Cookie,
+) {
+  const newUser = await createUser(baseUrl, user, cookie);
+
+  if (cookie) {
+    await updateUserPreference(baseUrl, newUser.id, cookie);
+  }
+
+  if (cookie && profileImageData) {
+    await uploadUserProfileImage(baseUrl, newUser.id, profileImageData, cookie);
+  }
+
+  return newUser;
+}
+
 // ******************
 // API call to server
 // ******************
@@ -219,11 +263,11 @@ async function firstAdminVisit(
     },
   );
 
-  if (response.ok) {
-    console.log(`* first admin visit done (removed marketplace red dot)`);
-  } else {
+  if (!response.ok) {
     await throwError(response, "Failed to remove red dot on marketplace");
   }
+
+  console.log(`* first admin visit done (removed marketplace red dot)`);
 
   return response.json();
 }
@@ -231,7 +275,7 @@ async function firstAdminVisit(
 async function createUser(
   baseUrl: string,
   user: Partial<User>,
-  cookie?: Cookie,
+  cookie: Cookie,
 ) {
   const headers = getHeaders(cookie);
   const response = await fetch(`${baseUrl}/api/v4/users`, {
@@ -244,13 +288,7 @@ async function createUser(
     await throwError(response, `Failed to create @${user.username} user`);
   }
 
-  const createdUser = await response.json();
-
-  if (cookie) {
-    await updateUserPreference(baseUrl, createdUser.id, cookie);
-  }
-
-  return createdUser;
+  return response.json();
 }
 
 async function patchUserRole(
@@ -278,48 +316,12 @@ async function updateUserPreference(
   userId: string,
   cookie: Cookie,
 ) {
-  // Sapphire theme as default
-  const sapphireTheme = {
-    type: 'Sapphire',
-    sidebarBg: '#174ab5',
-    sidebarText: '#ffffff',
-    sidebarUnreadText: '#ffffff',
-    sidebarTextHoverBg: '#2a58ba',
-    sidebarTextActiveBorder: '#57b5f0',
-    sidebarTextActiveColor: '#ffffff',
-    sidebarHeaderBg: '#1542a2',
-    sidebarHeaderTextColor: '#ffffff',
-    sidebarTeamBarBg: '#133a91',
-    onlineIndicator: '#3db887',
-    awayIndicator: '#ffbc1f',
-    dndIndicator: '#d24b4e',
-    mentionBg: '#ffffff',
-    mentionBj: '#ffffff',
-    mentionColor: '#174ab5',
-    centerChannelBg: '#ffffff',
-    centerChannelColor: '#3f4350',
-    newMessageSeparator: '#15b7b7',
-    linkColor: '#1c58d9',
-    buttonBg: '#1c58d9',
-    buttonColor: '#ffffff',
-    errorTextColor: '#d24b4e',
-    mentionHighlightBg: '#7ff0f0',
-    mentionHighlightLink: '#0d6e6e',
-    codeTheme: 'github',
-  };
-
   const preferences = [
     {
       user_id: userId,
       category: "tutorial_step",
       name: userId,
       value: "999",
-    },
-    {
-      user_id: userId,
-      category: "theme",
-      name: "",
-      value: JSON.stringify(sapphireTheme),
     },
   ];
   const headers = getHeaders(cookie);
@@ -336,6 +338,35 @@ async function updateUserPreference(
     await throwError(
       response,
       "Failed to update user preferences",
+    );
+  }
+
+  return response.json();
+}
+
+async function uploadUserProfileImage(
+  baseUrl: string,
+  userId: string,
+  imageData: Blob,
+  cookie: Cookie,
+) {
+  const headers = getHeaders(cookie);
+  const formData = new FormData();
+  formData.append("image", imageData);
+
+  const response = await fetch(
+    `${baseUrl}/api/v4/users/${userId}/image`,
+    {
+      method: "POST",
+      headers,
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    await throwError(
+      response,
+      "Failed to upload profile image",
     );
   }
 
@@ -403,16 +434,9 @@ async function promoteUserAsTeamAdmin(
   return response.json();
 }
 
-async function createAdminUser(
-  baseUrl: string,
-  user: Partial<User>,
-  cookie?: Cookie,
-) {
-  const newUser = await createUser(baseUrl, user, cookie);
-  await patchUserRole(baseUrl, newUser.id, "system_admin system_user", cookie);
-
-  return newUser;
-}
+// ******************
+// Utility functions
+// ******************
 
 function getHeaders(cookie?: Cookie): Headers {
   const headers = new Headers();
@@ -434,10 +458,6 @@ async function throwError(response: Response, message: string) {
     `${message}. Need to reset the server again and repeat running the script.`,
   );
 }
-
-// ******************
-// Utility functions
-// ******************
 
 function byName<T extends User & Team>(a: T, b: T): number {
   if (a.username) {
