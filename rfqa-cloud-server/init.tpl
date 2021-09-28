@@ -99,6 +99,31 @@ cd $HOME/mattermost_config
 touch mattermost.mattermost-license
 echo ${license} > mattermost.mattermost-license
 
+# Set env variables
+cd ~/mattermost_config
+env_file=mm_req.env
+touch $env_file
+
+if [ -z "${mm_env}" ]
+then
+  echo "No env variable from the request"
+else
+  echo "Received: ${mm_env}"
+
+  envarr=$(echo ${mm_env} | tr "," "\n")
+  for env in $envarr; do echo "> [$env]"; echo "$env" >> $env_file; done;
+fi
+
+echo "MM_CLUSTERSETTINGS_READONLYCONFIG=false" >> $env_file
+echo "MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket" >> $env_file
+echo "MM_LDAPSETTINGS_LDAPSERVER=mm-openldap" >> $env_file
+echo "MM_PLUGINSETTINGS_ENABLEUPLOADS=true" >> $env_file
+echo "MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME" >> $env_file
+echo "MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE" >> $env_file
+echo "MM_CLOUD_API_KEY=${cloud_api_key}" >> $env_file
+echo "MM_CUSTOMER_ID=${cloud_customer_id}" >> $env_file
+echo "MM_CLOUD_INSTALLATION_ID=${cloud_installation_id}" >> $env_file
+
 echo "Start mm-app"
 sudo docker run -d \
     --name mm-app \
@@ -106,14 +131,7 @@ sudo docker run -d \
     --link mm-openldap \
     --link mm-inbucket \
     -p 8065:8065 \
-    -e MM_CLUSTERSETTINGS_READONLYCONFIG=false \
-    -e MM_EMAILSETTINGS_SMTPSERVER=mm-inbucket \
-    -e MM_LDAPSETTINGS_LDAPSERVER=mm-openldap \
-    -e MM_SQLSETTINGS_DRIVERNAME=$MM_SQLSETTINGS_DRIVERNAME \
-    -e MM_SQLSETTINGS_DATASOURCE=$MM_SQLSETTINGS_DATASOURCE \
-    -e MM_CLOUD_API_KEY=${cloud_api_key} \
-    -e MM_CUSTOMER_ID=${cloud_customer_id} \
-    -e MM_CLOUD_INSTALLATION_ID=${cloud_installation_id} \
+    --env-file $HOME/mattermost_config/$env_file \
     -v $HOME/mattermost_config:/mattermost/config \
     -v $HOME/mattermost_data:/mattermost/data \
     mattermost/${mattermost_docker_image}:${mattermost_docker_tag}

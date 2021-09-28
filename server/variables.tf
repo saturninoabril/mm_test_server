@@ -9,7 +9,7 @@ variable "mattermost_docker_tag" {
 }
 
 variable "mm_env" {
-  description = "Mattermost environment variables, semicolon (;) separated for multiple k/v pairs, e.g. MM_FEATUREFLAGS_GLOBALHEADER=true"
+  description = "Mattermost environment variables, comma (,) separated for multiple k/v pairs, e.g. MM_FEATUREFLAGS_GLOBALHEADER=true"
 }
 
 variable "edition" {

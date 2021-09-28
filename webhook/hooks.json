@@ -107,6 +107,11 @@
                 "name": "docker-tag"
             },
             {
+                "envname": "MM_ENV",
+                "source": "url",
+                "name": "mm-env"
+            },
+            {
                 "envname": "EDITION",
                 "source": "url",
                 "name": "edition"

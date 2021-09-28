@@ -82,6 +82,7 @@ data "template_file" "init" {
     mattermost_docker_tag   = var.mattermost_docker_tag
     license                 = local.license
     edition                 = var.edition
+    mm_env                  = var.mm_env
     cloud_customer_id       = var.cloud_customer_id
     cloud_api_key           = var.cloud_api_key
     cloud_installation_id   = var.cloud_installation_id

@@ -124,7 +124,7 @@ then
 else
   echo "Received: ${mm_env}"
 
-  envarr=$(echo ${mm_env} | tr ";" "\n")
+  envarr=$(echo ${mm_env} | tr "," "\n")
   for env in $envarr; do echo "> [$env]"; echo "$env" >> $env_file; done;
 fi
 

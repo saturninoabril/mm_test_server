@@ -10,6 +10,10 @@ variable "mattermost_docker_tag" {
   default     = "test"
 }
 
+variable "mm_env" {
+  description = "Mattermost environment variables, comma (,) separated for multiple k/v pairs, e.g. MM_FEATUREFLAGS_GLOBALHEADER=true"
+}
+
 variable "edition" {
   description = "Mattermost edition, e.g. cloud-enterprise, cloud-professional or cloud-starter"
   type        = string
