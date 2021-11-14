@@ -15,6 +15,7 @@ interface Team {
   name: string;
   display_name: string;
   type: string;
+  allow_open_invite: boolean;
 }
 
 type Cookie = string | null | undefined;
@@ -108,13 +109,23 @@ async function createInitialUsersAndTeams(server: string) {
 
   // Update as needed
   const teams: Team[] = [
-    { name: "team-open", display_name: "Team Open", type: "O" },
-    { name: "rainforest", display_name: "Rainforest", type: "O" },
+    {
+      name: "team-open",
+      display_name: "Team Open",
+      type: "O",
+      allow_open_invite: true,
+    },
+    {
+      name: "rainforest",
+      display_name: "Rainforest",
+      type: "O",
+      allow_open_invite: true,
+    },
   ];
 
   // Get image for user profile
   const profileImageUrl =
-    "https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/mattermost-icon.png";
+    "https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/e2e/cypress/fixtures/mattermost-icon.png";
   const res = await fetch(profileImageUrl);
   const profileImageData = await res.blob();
 
