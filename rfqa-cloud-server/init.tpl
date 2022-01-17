@@ -82,6 +82,13 @@ sudo docker run -d \
 mkdir mattermost_config
 curl https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/mattermost_config.json --output $HOME/mattermost_config/config.json
 
+# Update server configuration
+jq '.ServiceSettings.ListenAddress = ":8065"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
+jq '.ServiceSettings.SiteURL = "http://${app_instance_url}:8065"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
+jq '.CloudSettings.CWSUrl = "${cloud_cws_url}"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
+jq '.CloudSettings.CWSAPIUrl = "${cloud_cws_url}"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
+sleep 5
+
 # Give user permission to folders
 sudo chown -R 2000:2000 $HOME/mattermost_config/
 mkdir $HOME/mattermost_data
@@ -168,28 +175,14 @@ until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm
 # Create initial data
 # -----------------
 
-echo "Install deno"
-curl -fsSL https://deno.land/x/install/install.sh | sh
+# TODO: DEBUG ONLY
+# echo "Install deno"
+# curl -fsSL https://deno.land/x/install/install.sh | sh
 
-export DENO_INSTALL="/home/ubuntu/.deno"
-export PATH="$DENO_INSTALL/bin:$PATH"
-deno --version
+# export DENO_INSTALL="/home/ubuntu/.deno"
+# export PATH="$DENO_INSTALL/bin:$PATH"
+# deno --version
 
-deno run --allow-net https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/init_server.ts
-
-# Update server configuration
-jq '.ServiceSettings.ListenAddress = ":8065"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
-jq '.ServiceSettings.SiteURL = "http://${app_instance_url}:8065"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
-jq '.CloudSettings.CWSUrl = "${cloud_cws_url}"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
-jq '.CloudSettings.CWSAPIUrl = "${cloud_cws_url}"' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
-jq '.ExperimentalSettings.RestrictSystemAdmin = true' $HOME/mattermost_config/config.json|sponge $HOME/mattermost_config/config.json
-sleep 5
-
-echo "Show config then restart"
-sudo docker exec mm-app sh -c 'mattermost config show'
-
-sudo docker restart mm-app
-sleep 10
-until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
+# deno run --allow-net https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/init_server.ts
 
 echo "Done"
