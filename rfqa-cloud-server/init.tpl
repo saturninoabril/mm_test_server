@@ -175,14 +175,13 @@ until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm
 # Create initial data
 # -----------------
 
-# TODO: DEBUG ONLY
-# echo "Install deno"
-# curl -fsSL https://deno.land/x/install/install.sh | sh
+echo "Install deno"
+curl -fsSL https://deno.land/x/install/install.sh | sh
 
-# export DENO_INSTALL="/home/ubuntu/.deno"
-# export PATH="$DENO_INSTALL/bin:$PATH"
-# deno --version
+export DENO_INSTALL="/home/ubuntu/.deno"
+export PATH="$DENO_INSTALL/bin:$PATH"
+deno --version
 
-# deno run --allow-net https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/init_server.ts
+deno run --allow-net https://raw.githubusercontent.com/saturninoabril/mm_test_server/main/rfqa-cloud-server/init_server.ts
 
 echo "Done"
