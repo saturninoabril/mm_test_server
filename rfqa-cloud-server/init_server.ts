@@ -249,22 +249,27 @@ async function createNewUser(
 
 async function loginUser(baseUrl: string, user: Partial<User>) {
   const headers = getHeaders();
-  const response = await fetch(`${baseUrl}/api/v4/users/login`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      login_id: user.username || user.email,
-      password: user.password,
-    }),
-  });
 
-  if (!response.ok) {
-    await throwError(response, `Failed to login as @${user.username}`);
+  try {
+    const response = await fetch(`${baseUrl}/api/v4/users/login`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        login_id: user.username || user.email,
+        password: user.password,
+      }),
+    });
+
+    if (!response.ok) {
+      await throwError(response, `Failed to login as @${user.username}`);
+    }
+
+    const data = await response.json();
+
+    return { user: data, cookie: response.headers.get("set-cookie") };
+  } catch (error) {
+    console.log(`Error in loginUser`, error);
   }
-
-  const data = await response.json();
-
-  return { user: data, cookie: response.headers.get("set-cookie") };
 }
 
 async function firstAdminVisit(
