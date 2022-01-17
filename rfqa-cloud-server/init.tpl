@@ -171,6 +171,8 @@ sudo docker restart mm-app
 sleep 10
 until curl --max-time 5 --output - http://localhost:8065; do echo waiting for mm-app; sleep 5; done;
 
+sleep 10
+
 # -----------------
 # Create initial data
 # -----------------

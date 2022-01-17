@@ -27,7 +27,12 @@ main();
 
 async function main() {
   try {
-    await createInitialUsersAndTeams(localServer);
+    // Get image for user profile
+    const profileImageUrl =
+    "https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/e2e/cypress/fixtures/mattermost-icon.png";
+    const res = await fetch(profileImageUrl);
+    const profileImageData = await res.blob();
+    await createInitialUsersAndTeams(localServer, profileImageData);
   } catch (e) {
     console.log(`Error in main`, e);
   }
@@ -36,7 +41,7 @@ async function main() {
 // ***************************************
 // Main function to create users and teams
 // ***************************************
-async function createInitialUsersAndTeams(server: string) {
+async function createInitialUsersAndTeams(server: string, profileImageData: Blob) {
   // Update as needed
   const firstUserAsAdmin: User = {
     email: "lindy@mattermost.com",
@@ -130,12 +135,6 @@ async function createInitialUsersAndTeams(server: string) {
       allow_open_invite: true,
     },
   ];
-
-  // Get image for user profile
-  const profileImageUrl =
-    "https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/e2e/cypress/fixtures/mattermost-icon.png";
-  const res = await fetch(profileImageUrl);
-  const profileImageData = await res.blob();
 
   const createdUsers: Record<string, User> = {};
   const createdTeams: Record<string, Team> = {};
