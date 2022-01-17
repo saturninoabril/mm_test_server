@@ -23,7 +23,15 @@ type Cookie = string | null | undefined;
 console.log("--------------------------");
 const localServer = "http://localhost:8065";
 console.log(`Server: ${localServer}`);
-await createInitialUsersAndTeams(localServer);
+main();
+
+async function main() {
+  try {
+    await createInitialUsersAndTeams(localServer);
+  } catch (e) {
+    console.log(`Error in main`, e);
+  }
+}
 
 // ***************************************
 // Main function to create users and teams
