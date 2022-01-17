@@ -259,6 +259,7 @@ async function loginUser(baseUrl: string, user: Partial<User>) {
         password: user.password,
       }),
     });
+    console.log(`response`, response);
 
     if (!response.ok) {
       await throwError(response, `Failed to login as @${user.username}`);
@@ -269,6 +270,8 @@ async function loginUser(baseUrl: string, user: Partial<User>) {
     return { user: data, cookie: response.headers.get("set-cookie") };
   } catch (error) {
     console.log(`Error in loginUser`, error);
+
+    return { user: null, cookie: null };
   }
 }
 
