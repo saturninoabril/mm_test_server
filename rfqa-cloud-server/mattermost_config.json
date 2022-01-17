@@ -469,7 +469,7 @@
         "ClientSideCertCheck": "secondary",
         "EnableClickToReply": false,
         "LinkMetadataTimeoutMilliseconds": 5000,
-        "RestrictSystemAdmin": true,
+        "RestrictSystemAdmin": false,
         "UseNewSAMLLibrary": false,
         "CloudUserLimit": 0,
         "CloudBilling": true,
