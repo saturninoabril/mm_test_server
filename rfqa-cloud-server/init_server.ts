@@ -349,6 +349,12 @@ async function updateUserPreference(
       name: userId,
       value: "999",
     },
+    {
+      user_id: userId,
+      category: "cloud_trial_banner",
+      name: "trial",
+      value: "14_days_banner",
+    },
   ];
   const headers = getHeaders(cookie);
   const response = await fetch(
