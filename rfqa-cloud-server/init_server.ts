@@ -148,6 +148,7 @@ async function createInitialUsersAndTeams(server: string, profileImageData: Blob
   // Upload admin's profile image
   const { cookie } = await loginUser(server, firstUserAsAdmin);
   await firstAdminVisit(server, cookie);
+  await updateUserPreference(server, admin.id, cookie);
   await uploadUserProfileImage(server, admin.id, profileImageData, cookie);
 
   // Create other admins
