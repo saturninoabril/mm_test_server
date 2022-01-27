@@ -38,7 +38,7 @@ export PG_USER="mmuser"
 export PG_PASSWORD="mostest"
 export PG_DATABASE="mattermost_test"
 export MM_SQLSETTINGS_DRIVERNAME="postgres"
-export MM_SQLSETTINGS_DATASOURCE="postgres://$PG_USER:$PG_PASSWORD@mm-db:5432/$PG_DATABASE?sslmode=disable&connect_timeout=10"
+export MM_SQLSETTINGS_DATASOURCE="postgres://$PG_USER:$PG_PASSWORD@mm-db:5432/$PG_DATABASE?sslmode=disable&connect_timeout=10&binary_parameters=yes"
 
 sudo docker run -d \
     --name mm-db \

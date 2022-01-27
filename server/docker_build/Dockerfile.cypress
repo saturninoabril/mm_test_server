@@ -37,7 +37,7 @@ WORKDIR /home/src
 ENV CI_BASE_URL=localhost
 
 ENV CYPRESS_baseUrl="http://${CI_BASE_URL}"
-ENV CYPRESS_dbConnection="postgres://mmuser:mostest@${CI_BASE_URL}:5432/mattermost_test?sslmode=disable\u0026connect_timeout=10"
+ENV CYPRESS_dbConnection="postgres://mmuser:mostest@${CI_BASE_URL}:5432/mattermost_test?sslmode=disable\u0026connect_timeout=10\u0026binary_parameters=yes"
 ENV CYPRESS_webhookBaseUrl="http://${CI_BASE_URL}:3000"
 ENV CYPRESS_smtpUrl="http://${CI_BASE_URL}:10080"
 ENV CYPRESS_ciBaseUrl=$CI_BASE_URL
