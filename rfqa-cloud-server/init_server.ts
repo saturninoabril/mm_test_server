@@ -29,7 +29,7 @@ async function main() {
   try {
     // Get image for user profile
     const profileImageUrl =
-    "https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/e2e/cypress/fixtures/mattermost-icon.png";
+    "https://raw.githubusercontent.com/mattermost/mattermost-webapp/master/e2e/cypress/tests/fixtures/mattermost-icon.png";
     const res = await fetch(profileImageUrl);
     const profileImageData = await res.blob();
     await createInitialUsersAndTeams(localServer, profileImageData);
